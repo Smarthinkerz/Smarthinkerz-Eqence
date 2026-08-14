@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog';
 
-const HERO_BACKGROUND_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/d12fce0/client/public/media/eqence-hero-background.mp4';
+const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/246f7d3/client/public/media/eqence-demo.mp4';
 
 const pricingPlans = [
