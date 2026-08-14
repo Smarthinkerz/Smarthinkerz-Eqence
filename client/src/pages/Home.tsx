@@ -93,7 +93,7 @@ export default function Home() {
               </Link>
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="rounded-lg border border-white/35 bg-black/20 px-8 py-4 text-lg font-semibold text-[#C41E3A] shadow-lg backdrop-blur-sm transition-all duration-150 hover:bg-white hover:text-[#C41E3A] active:scale-[0.99] active:opacity-90">
+                  <button className="rounded-lg border border-white/35 bg-white px-8 py-4 text-lg font-semibold text-[#C41E3A] shadow-lg backdrop-blur-sm transition-all duration-150 hover:bg-white hover:text-[#C41E3A] active:scale-[0.99] active:opacity-90">
                     {t('hero.cta2')}
                   </button>
                 </DialogTrigger>
