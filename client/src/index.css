@@ -199,13 +199,42 @@
   
   
   .btn-primary {
-    @apply bg-[--color-monza] text-white font-semibold px-6 py-3 rounded-lg 
-           transition-all duration-150 hover:brightness-110 active:scale-[0.99] active:opacity-90;
+    background-color: #C41E3A;
+    color: #fff;
+    border: 1px solid #C41E3A;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1), filter 150ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-primary:active {
+    opacity: 0.9;
+    transform: scale(0.99);
   }
 
   .btn-secondary {
-    @apply border-2 border-[--color-monza] text-[--color-monza] font-semibold px-6 py-3 rounded-lg 
-           transition-all duration-150 hover:bg-[--color-monza] hover:text-white active:scale-[0.99] active:opacity-90;
+    background-color: transparent;
+    color: #C41E3A;
+    border: 2px solid #C41E3A;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms cubic-bezier(0.23, 1, 0.32, 1), color 150ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .btn-secondary:hover {
+    background-color: #C41E3A;
+    color: #fff;
+  }
+
+  .btn-secondary:active {
+    opacity: 0.9;
+    transform: scale(0.99);
   }
 
   .card-elevated {
