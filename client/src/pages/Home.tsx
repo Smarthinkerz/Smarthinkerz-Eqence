@@ -1,6 +1,15 @@
+// Eqence interface visual system: Monza-red actions sit on clean enterprise-neutral surfaces, while product media is framed by dark browser chrome.
 import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
 import { LanguageToggle } from '../components/LanguageToggle';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog';
 
 const pricingPlans = [
   { id: 'free', name: 'Free', price: 0, features: ['50 reviews/mo', 'Basic monitoring', 'Email alerts', '1 platform'], popular: false },
@@ -64,9 +73,42 @@ export default function Home() {
               <Link href="/register" className="btn-primary text-lg px-8 py-4 shadow-lg shadow-red-200/50">
                 {t('hero.cta')}
               </Link>
-              <button className="btn-secondary text-lg px-8 py-4">
-                {t('hero.cta2')}
-              </button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="btn-secondary text-lg px-8 py-4">
+                    {t('hero.cta2')}
+                  </button>
+                </DialogTrigger>
+                <DialogContent
+                  showCloseButton={false}
+                  className="w-[min(96vw,72rem)] max-w-[min(96vw,72rem)] gap-0 overflow-hidden border-0 bg-slate-950 p-0 shadow-2xl sm:max-w-[min(96vw,72rem)]"
+                >
+                  <DialogTitle className="sr-only">Eqence product demo</DialogTitle>
+                  <DialogDescription className="sr-only">
+                    A 50-second Eqence product demonstration.
+                  </DialogDescription>
+                  <div className="relative aspect-video bg-black">
+                    <video
+                      className="h-full w-full"
+                      controls
+                      autoPlay
+                      playsInline
+                      preload="metadata"
+                      aria-label="Eqence product demonstration"
+                    >
+                      <source src="/media/eqence-demo.mp4" type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                    <DialogClose
+                      aria-label="Close demo"
+                      className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 text-2xl leading-none text-white shadow-lg transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      <span aria-hidden="true">×</span>
+                      <span className="sr-only">Close demo</span>
+                    </DialogClose>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
