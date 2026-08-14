@@ -11,6 +11,8 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog';
 
+const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/246f7d3/client/public/media/eqence-demo.mp4';
+
 const pricingPlans = [
   { id: 'free', name: 'Free', price: 0, features: ['50 reviews/mo', 'Basic monitoring', 'Email alerts', '1 platform'], popular: false },
   { id: 'starter', name: 'Starter', price: 29, features: ['100 reviews/mo', 'Sentiment analysis', 'Email + SMS alerts', '3 platforms', 'Basic reports'], popular: false },
@@ -96,7 +98,7 @@ export default function Home() {
                       preload="metadata"
                       aria-label="Eqence product demonstration"
                     >
-                      <source src="/media/eqence-demo.mp4" type="video/mp4" />
+                      <source src={DEMO_VIDEO_URL} type="video/mp4" />
                       Your browser does not support the video tag.
                     </video>
                     <DialogClose
