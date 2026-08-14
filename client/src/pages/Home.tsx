@@ -1,17 +1,9 @@
-// Eqence interface visual system: Monza-red actions sit on clean enterprise-neutral surfaces, while product media is framed by dark browser chrome.
+// Eqence interface visual system: Monza-red actions sit on clean enterprise-neutral surfaces, while the hero uses silent, text-free product motion.
 import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
 import { LanguageToggle } from '../components/LanguageToggle';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from '../components/ui/dialog';
 
-const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/246f7d3/client/public/media/eqence-demo.mp4';
+const HERO_BACKGROUND_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/d12fce0/client/public/media/eqence-hero-background.mp4';
 
 const pricingPlans = [
   { id: 'free', name: 'Free', price: 0, features: ['50 reviews/mo', 'Basic monitoring', 'Email alerts', '1 platform'], popular: false },
@@ -56,73 +48,23 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 lg:pt-40 lg:pb-28 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 via-white to-blue-50/30" />
-        <div className="container relative">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 text-[#C41E3A] text-sm font-medium mb-6 animate-fade-in">
-              <span className="w-2 h-2 rounded-full bg-[#C41E3A] animate-pulse" />
-              Trusted by 2,000+ Shopify Merchants
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-tight mb-6 animate-fade-in-up">
-              {t('hero.title')}
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up animate-delay-100">
-              {t('hero.subtitle')}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up animate-delay-200">
-              <Link href="/register" className="btn-primary text-lg px-8 py-4 shadow-lg shadow-red-200/50">
-                {t('hero.cta')}
-              </Link>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button className="btn-secondary text-lg px-8 py-4">
-                    {t('hero.cta2')}
-                  </button>
-                </DialogTrigger>
-                <DialogContent
-                  showCloseButton={false}
-                  className="w-[min(96vw,72rem)] max-w-[min(96vw,72rem)] gap-0 overflow-hidden border-0 bg-slate-950 p-0 shadow-2xl sm:max-w-[min(96vw,72rem)]"
-                >
-                  <DialogTitle className="sr-only">Eqence product demo</DialogTitle>
-                  <DialogDescription className="sr-only">
-                    A 50-second Eqence product demonstration.
-                  </DialogDescription>
-                  <div className="relative aspect-video bg-black">
-                    <video
-                      className="h-full w-full"
-                      controls
-                      autoPlay
-                      playsInline
-                      preload="metadata"
-                      aria-label="Eqence product demonstration"
-                    >
-                      <source src={DEMO_VIDEO_URL} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                    <DialogClose
-                      aria-label="Close demo"
-                      className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 text-2xl leading-none text-white shadow-lg transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
-                    >
-                      <span aria-hidden="true">×</span>
-                      <span className="sr-only">Close demo</span>
-                    </DialogClose>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-
-          {/* Animated dashboard preview supplied by the user. */}
-          <div className="mt-16 max-w-5xl mx-auto overflow-hidden rounded-2xl bg-slate-950 shadow-2xl ring-1 ring-slate-900/10 animate-fade-in-up animate-delay-300">
-            <img
-              src="/media/eqence-dashboard-preview.gif"
-              alt="Animated Eqence dashboard preview showing reputation, review, response rate, and sentiment metrics"
-              className="block h-auto w-full"
-            />
-          </div>
-        </div>
+      {/* Silent, text-free hero product motion supplied by the user. */}
+      <section
+        aria-label="Eqence product motion visual"
+        className="relative mt-16 min-h-[28rem] overflow-hidden bg-slate-950 sm:min-h-[calc(100svh-4rem)]"
+      >
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <source src={HERO_BACKGROUND_VIDEO_URL} type="video/mp4" />
+        </video>
       </section>
 
       {/* Features Section */}
