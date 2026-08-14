@@ -1,4 +1,5 @@
 // Eqence interface visual system: Monza-red actions sit on clean enterprise-neutral surfaces, while hero content remains legible over silent product motion.
+import { useEffect, useRef } from 'react';
 import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
 import { LanguageToggle } from '../components/LanguageToggle';
@@ -31,6 +32,40 @@ const testimonials = [
 
 export default function Home() {
   const { t } = useI18n();
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const heroVideo = heroVideoRef.current;
+    if (!heroVideo) return;
+
+    const startMutedPlayback = () => {
+      heroVideo.muted = true;
+      heroVideo.defaultMuted = true;
+      heroVideo.setAttribute('muted', '');
+      heroVideo.setAttribute('playsinline', '');
+      heroVideo.setAttribute('webkit-playsinline', 'true');
+      void heroVideo.play().catch(() => undefined);
+    };
+
+    const resumeWhenVisible = () => {
+      if (document.visibilityState === 'visible') startMutedPlayback();
+    };
+
+    startMutedPlayback();
+    heroVideo.addEventListener('loadeddata', startMutedPlayback);
+    heroVideo.addEventListener('canplay', startMutedPlayback);
+    document.addEventListener('visibilitychange', resumeWhenVisible);
+    window.addEventListener('touchstart', startMutedPlayback, { once: true, passive: true });
+    window.addEventListener('pointerdown', startMutedPlayback, { once: true, passive: true });
+
+    return () => {
+      heroVideo.removeEventListener('loadeddata', startMutedPlayback);
+      heroVideo.removeEventListener('canplay', startMutedPlayback);
+      document.removeEventListener('visibilitychange', resumeWhenVisible);
+      window.removeEventListener('touchstart', startMutedPlayback);
+      window.removeEventListener('pointerdown', startMutedPlayback);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -63,12 +98,14 @@ export default function Home() {
         className="relative mt-16 min-h-[28rem] overflow-hidden bg-slate-700 sm:min-h-[calc(100svh-4rem)]"
       >
         <video
+          ref={heroVideoRef}
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          poster="/media/eqence-hero-poster.jpg"
+          preload="auto"
           aria-hidden="true"
           tabIndex={-1}
         >
