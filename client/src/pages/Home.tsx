@@ -60,7 +60,7 @@ export default function Home() {
       {/* Silent hero product motion supplied by the user, with foreground content retained above it. */}
       <section
         aria-label="Eqence product experience"
-        className="relative mt-16 min-h-[28rem] overflow-hidden bg-slate-950 sm:min-h-[calc(100svh-4rem)]"
+        className="relative mt-16 min-h-[28rem] overflow-hidden bg-slate-700 sm:min-h-[calc(100svh-4rem)]"
       >
         <video
           className="absolute inset-0 h-full w-full object-cover"
@@ -74,7 +74,7 @@ export default function Home() {
         >
           <source src={HERO_BACKGROUND_VIDEO_URL} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/62 to-slate-950/78" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-100/26 via-slate-200/12 to-slate-100/18" />
         <div className="container relative z-10 flex min-h-[28rem] items-center justify-center py-20 sm:min-h-[calc(100svh-4rem)] sm:py-28">
           <div className="max-w-4xl text-center text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-white shadow-lg backdrop-blur-sm animate-fade-in">
