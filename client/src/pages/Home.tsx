@@ -15,7 +15,7 @@ import {
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
 const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/246f7d3/client/public/media/eqence-demo.mp4';
-type BackgroundVideoId = 'hero' | 'how-it-works';
+type BackgroundVideoId = 'hero';
 
 const pricingPlans = [
   { id: 'free', name: 'Free', price: 0, features: ['50 reviews/mo', 'Basic monitoring', 'Email alerts', '1 platform'], popular: false },
@@ -35,10 +35,8 @@ const testimonials = [
 export default function Home() {
   const { t } = useI18n();
   const heroVideoRef = useRef<HTMLVideoElement>(null);
-  const howItWorksVideoRef = useRef<HTMLVideoElement>(null);
   const manuallyPausedVideos = useRef(new Set<BackgroundVideoId>());
   const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(true);
-  const [isHowItWorksVideoPlaying, setIsHowItWorksVideoPlaying] = useState(true);
 
   const toggleBackgroundVideo = (
     id: BackgroundVideoId,
@@ -62,10 +60,8 @@ export default function Home() {
 
   useEffect(() => {
     const heroVideo = heroVideoRef.current;
-    const howItWorksVideo = howItWorksVideoRef.current;
     const backgroundVideos = [
       { id: 'hero' as const, video: heroVideo, setPlaying: setIsHeroVideoPlaying },
-      { id: 'how-it-works' as const, video: howItWorksVideo, setPlaying: setIsHowItWorksVideoPlaying },
     ].filter((item): item is { id: BackgroundVideoId; video: HTMLVideoElement; setPlaying: (playing: boolean) => void } => item.video !== null);
     if (!backgroundVideos.length) return;
 
@@ -81,7 +77,6 @@ export default function Home() {
     const startBackgroundVideos = () => backgroundVideos.forEach(startMutedPlayback);
     const syncPlaybackStates = () => {
       setIsHeroVideoPlaying(Boolean(heroVideo && !heroVideo.paused));
-      setIsHowItWorksVideoPlaying(Boolean(howItWorksVideo && !howItWorksVideo.paused));
     };
 
     const resumeWhenVisible = () => {
@@ -254,37 +249,11 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="relative isolate overflow-hidden bg-slate-950 py-20 sm:py-24 lg:py-28">
-        <video
-          ref={howItWorksVideoRef}
-          id="how-it-works-background-video"
-          className="absolute inset-0 -z-20 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/media/eqence-how-it-works-poster.jpg"
-          preload="auto"
-          aria-hidden="true"
-          tabIndex={-1}
-        >
-          <source src={HOW_IT_WORKS_BACKGROUND_VIDEO_URL} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/52 via-slate-900/28 to-slate-950/56" />
-        <button
-          type="button"
-          onClick={() => toggleBackgroundVideo('how-it-works', howItWorksVideoRef.current, setIsHowItWorksVideoPlaying)}
-          aria-label={isHowItWorksVideoPlaying ? 'Pause How It Works background video' : 'Play How It Works background video'}
-          title={isHowItWorksVideoPlaying ? 'Pause background video' : 'Play background video'}
-          className="absolute right-5 bottom-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-slate-950/65 text-sm text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-950/85 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
-        >
-          <span aria-hidden="true">{isHowItWorksVideoPlaying ? 'Ⅱ' : '▶'}</span>
-          <span className="sr-only">{isHowItWorksVideoPlaying ? 'Pause' : 'Play'} How It Works background video</span>
-        </button>
+      <section id="how-it-works" className="bg-white py-20 sm:py-24 lg:py-28">
         <div className="container relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#C41E3A] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] mb-4">{t('howit.title')}</h2>
-            <p className="text-lg text-slate-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">{t('howit.subtitle')}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#C41E3A] mb-4">{t('howit.title')}</h2>
+            <p className="text-lg text-gray-600">{t('howit.subtitle')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
@@ -292,13 +261,13 @@ export default function Home() {
               { step: '2', key: 'step2', icon: '📡' },
               { step: '3', key: 'step3', icon: '🚀' },
             ].map((item, i) => (
-              <div key={i} className="rounded-2xl border border-white/15 bg-slate-950/24 p-6 text-center shadow-xl backdrop-blur-sm">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/90 flex items-center justify-center text-2xl shadow-lg">
+              <div key={i} className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-lg">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl border border-red-100 bg-red-50 flex items-center justify-center text-2xl shadow-sm">
                   {item.icon}
                 </div>
-                <div className="text-xs font-bold text-[#ff879a] uppercase tracking-wider mb-2">Step {item.step}</div>
+                <div className="text-xs font-bold text-[#C41E3A] uppercase tracking-wider mb-2">Step {item.step}</div>
                 <h3 className="text-lg font-semibold text-[#C41E3A] mb-2">{t(`howit.${item.key}`)}</h3>
-                <p className="text-sm text-slate-100">{t(`howit.${item.key}.desc`)}</p>
+                <p className="text-sm text-gray-600">{t(`howit.${item.key}.desc`)}</p>
               </div>
             ))}
           </div>
