@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 
-const DEFAULT_ADMIN_EMAIL = 'admin@eqence.com';
-const DEFAULT_ADMIN_PASSWORD = 'Admin@2026!';
+const DEFAULT_ADMIN_EMAIL = 'fathi.alriyami@smarthinkerz.com';
+const DEFAULT_ADMIN_PASSWORD = 'TOMOKOnote76$';
 
 export default function AdminLogin() {
   const [, navigate] = useLocation();
@@ -61,7 +61,7 @@ export default function AdminLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#C41E3A] 
                            focus:ring-2 focus:ring-[#C41E3A]/20 outline-none transition-all duration-150"
-                placeholder="admin@eqence.com"
+                placeholder="fathi.alriyami@smarthinkerz.com"
                 required
               />
             </div>

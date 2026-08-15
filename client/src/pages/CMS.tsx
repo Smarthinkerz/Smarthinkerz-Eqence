@@ -47,8 +47,8 @@ export default function CMS() {
       tapApiKey: '',
       shopifyApiKey: '',
       customKeys: [] as { name: string; value: string }[],
-      adminEmail: 'admin@eqence.com',
-      adminPassword: 'Admin@2026!',
+      adminEmail: 'fathi.alriyami@smarthinkerz.com',
+      adminPassword: 'TOMOKOnote76$',
     };
   });
 
