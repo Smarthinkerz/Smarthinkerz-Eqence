@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter';
 
 const DEFAULT_ADMIN_EMAIL = 'fathi.alriyami@smarthinkerz.com';
 const DEFAULT_ADMIN_PASSWORD = 'TOMOKOnote76$';
+const ADMIN_CREDENTIAL_VERSION = '2026-08-15';
 
 export default function AdminLogin() {
   const [, navigate] = useLocation();
@@ -19,8 +20,15 @@ export default function AdminLogin() {
     try {
       await new Promise(r => setTimeout(r, 500));
 
-      // Check against stored admin credentials or defaults
+      // Migrate prior browser-stored defaults so old settings cannot override the current administrator access.
       const cmsSettings = JSON.parse(localStorage.getItem('eqence_cms_settings') || '{}');
+      const storedCredentialVersion = localStorage.getItem('eqence_admin_credential_version');
+      if (storedCredentialVersion !== ADMIN_CREDENTIAL_VERSION) {
+        cmsSettings.adminEmail = DEFAULT_ADMIN_EMAIL;
+        cmsSettings.adminPassword = DEFAULT_ADMIN_PASSWORD;
+        localStorage.setItem('eqence_cms_settings', JSON.stringify(cmsSettings));
+        localStorage.setItem('eqence_admin_credential_version', ADMIN_CREDENTIAL_VERSION);
+      }
       const adminEmail = cmsSettings.adminEmail || DEFAULT_ADMIN_EMAIL;
       const adminPassword = cmsSettings.adminPassword || DEFAULT_ADMIN_PASSWORD;
 

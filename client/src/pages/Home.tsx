@@ -240,7 +240,7 @@ export default function Home() {
                   {item.icon}
                 </div>
                 <div className="text-xs font-bold text-[#ff879a] uppercase tracking-wider mb-2">Step {item.step}</div>
-                <h3 className="text-lg font-semibold text-white mb-2">{t(`howit.${item.key}`)}</h3>
+                <h3 className="text-lg font-semibold text-[#C41E3A] mb-2">{t(`howit.${item.key}`)}</h3>
                 <p className="text-sm text-slate-100">{t(`howit.${item.key}.desc`)}</p>
               </div>
             ))}
