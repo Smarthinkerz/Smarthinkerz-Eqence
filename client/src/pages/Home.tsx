@@ -224,10 +224,10 @@ export default function Home() {
         >
           <source src={HOW_IT_WORKS_BACKGROUND_VIDEO_URL} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/78 via-slate-900/56 to-slate-950/82" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/52 via-slate-900/28 to-slate-950/56" />
         <div className="container relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] mb-4">{t('howit.title')}</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#C41E3A] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] mb-4">{t('howit.title')}</h2>
             <p className="text-lg text-slate-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">{t('howit.subtitle')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
