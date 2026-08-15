@@ -13,6 +13,7 @@ import {
 } from '../components/ui/dialog';
 
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
+const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
 const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/246f7d3/client/public/media/eqence-demo.mp4';
 
 const pricingPlans = [
@@ -33,37 +34,47 @@ const testimonials = [
 export default function Home() {
   const { t } = useI18n();
   const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const howItWorksVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const heroVideo = heroVideoRef.current;
-    if (!heroVideo) return;
+    const howItWorksVideo = howItWorksVideoRef.current;
+    const backgroundVideos = [heroVideo, howItWorksVideo].filter(
+      (video): video is HTMLVideoElement => video !== null,
+    );
+    if (!backgroundVideos.length) return;
 
-    const startMutedPlayback = () => {
-      heroVideo.muted = true;
-      heroVideo.defaultMuted = true;
-      heroVideo.setAttribute('muted', '');
-      heroVideo.setAttribute('playsinline', '');
-      heroVideo.setAttribute('webkit-playsinline', 'true');
-      void heroVideo.play().catch(() => undefined);
+    const startMutedPlayback = (video: HTMLVideoElement) => {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', 'true');
+      void video.play().catch(() => undefined);
     };
+    const startBackgroundVideos = () => backgroundVideos.forEach(startMutedPlayback);
 
     const resumeWhenVisible = () => {
-      if (document.visibilityState === 'visible') startMutedPlayback();
+      if (document.visibilityState === 'visible') startBackgroundVideos();
     };
 
-    startMutedPlayback();
-    heroVideo.addEventListener('loadeddata', startMutedPlayback);
-    heroVideo.addEventListener('canplay', startMutedPlayback);
+    startBackgroundVideos();
+    backgroundVideos.forEach((video) => {
+      video.addEventListener('loadeddata', startBackgroundVideos);
+      video.addEventListener('canplay', startBackgroundVideos);
+    });
     document.addEventListener('visibilitychange', resumeWhenVisible);
-    window.addEventListener('touchstart', startMutedPlayback, { once: true, passive: true });
-    window.addEventListener('pointerdown', startMutedPlayback, { once: true, passive: true });
+    window.addEventListener('touchstart', startBackgroundVideos, { once: true, passive: true });
+    window.addEventListener('pointerdown', startBackgroundVideos, { once: true, passive: true });
 
     return () => {
-      heroVideo.removeEventListener('loadeddata', startMutedPlayback);
-      heroVideo.removeEventListener('canplay', startMutedPlayback);
+      backgroundVideos.forEach((video) => {
+        video.removeEventListener('loadeddata', startBackgroundVideos);
+        video.removeEventListener('canplay', startBackgroundVideos);
+      });
       document.removeEventListener('visibilitychange', resumeWhenVisible);
-      window.removeEventListener('touchstart', startMutedPlayback);
-      window.removeEventListener('pointerdown', startMutedPlayback);
+      window.removeEventListener('touchstart', startBackgroundVideos);
+      window.removeEventListener('pointerdown', startBackgroundVideos);
     };
   }, []);
 
@@ -198,11 +209,25 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="section-padding">
-        <div className="container">
+      <section id="how-it-works" className="relative isolate overflow-hidden bg-slate-950 py-20 sm:py-24 lg:py-28">
+        <video
+          ref={howItWorksVideoRef}
+          className="absolute inset-0 -z-20 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <source src={HOW_IT_WORKS_BACKGROUND_VIDEO_URL} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/78 via-slate-900/56 to-slate-950/82" />
+        <div className="container relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{t('howit.title')}</h2>
-            <p className="text-lg text-gray-600">{t('howit.subtitle')}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] mb-4">{t('howit.title')}</h2>
+            <p className="text-lg text-slate-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">{t('howit.subtitle')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
@@ -210,13 +235,13 @@ export default function Home() {
               { step: '2', key: 'step2', icon: '📡' },
               { step: '3', key: 'step3', icon: '🚀' },
             ].map((item, i) => (
-              <div key={i} className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 flex items-center justify-center text-2xl">
+              <div key={i} className="rounded-2xl border border-white/15 bg-slate-950/24 p-6 text-center shadow-xl backdrop-blur-sm">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/90 flex items-center justify-center text-2xl shadow-lg">
                   {item.icon}
                 </div>
-                <div className="text-xs font-bold text-[#C41E3A] uppercase tracking-wider mb-2">Step {item.step}</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t(`howit.${item.key}`)}</h3>
-                <p className="text-sm text-gray-600">{t(`howit.${item.key}.desc`)}</p>
+                <div className="text-xs font-bold text-[#ff879a] uppercase tracking-wider mb-2">Step {item.step}</div>
+                <h3 className="text-lg font-semibold text-white mb-2">{t(`howit.${item.key}`)}</h3>
+                <p className="text-sm text-slate-100">{t(`howit.${item.key}.desc`)}</p>
               </div>
             ))}
           </div>
