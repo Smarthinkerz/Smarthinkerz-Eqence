@@ -217,6 +217,7 @@ export default function Home() {
           muted
           loop
           playsInline
+          poster="/media/eqence-how-it-works-poster.jpg"
           preload="auto"
           aria-hidden="true"
           tabIndex={-1}
