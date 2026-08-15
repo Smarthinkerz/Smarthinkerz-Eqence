@@ -1,5 +1,5 @@
 // Eqence interface visual system: Monza-red actions sit on clean enterprise-neutral surfaces, while hero content remains legible over silent product motion.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
 import { LanguageToggle } from '../components/LanguageToggle';
@@ -15,6 +15,7 @@ import {
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
 const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/246f7d3/client/public/media/eqence-demo.mp4';
+type BackgroundVideoId = 'hero' | 'how-it-works';
 
 const pricingPlans = [
   { id: 'free', name: 'Free', price: 0, features: ['50 reviews/mo', 'Basic monitoring', 'Email alerts', '1 platform'], popular: false },
@@ -35,42 +36,75 @@ export default function Home() {
   const { t } = useI18n();
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const howItWorksVideoRef = useRef<HTMLVideoElement>(null);
+  const manuallyPausedVideos = useRef(new Set<BackgroundVideoId>());
+  const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(true);
+  const [isHowItWorksVideoPlaying, setIsHowItWorksVideoPlaying] = useState(true);
+
+  const toggleBackgroundVideo = (
+    id: BackgroundVideoId,
+    video: HTMLVideoElement | null,
+    setPlaying: (playing: boolean) => void,
+  ) => {
+    if (!video) return;
+
+    if (video.paused) {
+      manuallyPausedVideos.current.delete(id);
+      video.muted = true;
+      video.defaultMuted = true;
+      void video.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      return;
+    }
+
+    manuallyPausedVideos.current.add(id);
+    video.pause();
+    setPlaying(false);
+  };
 
   useEffect(() => {
     const heroVideo = heroVideoRef.current;
     const howItWorksVideo = howItWorksVideoRef.current;
-    const backgroundVideos = [heroVideo, howItWorksVideo].filter(
-      (video): video is HTMLVideoElement => video !== null,
-    );
+    const backgroundVideos = [
+      { id: 'hero' as const, video: heroVideo, setPlaying: setIsHeroVideoPlaying },
+      { id: 'how-it-works' as const, video: howItWorksVideo, setPlaying: setIsHowItWorksVideoPlaying },
+    ].filter((item): item is { id: BackgroundVideoId; video: HTMLVideoElement; setPlaying: (playing: boolean) => void } => item.video !== null);
     if (!backgroundVideos.length) return;
 
-    const startMutedPlayback = (video: HTMLVideoElement) => {
+    const startMutedPlayback = ({ id, video, setPlaying }: (typeof backgroundVideos)[number]) => {
+      if (manuallyPausedVideos.current.has(id)) return;
       video.muted = true;
       video.defaultMuted = true;
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', 'true');
-      void video.play().catch(() => undefined);
+      void video.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     };
     const startBackgroundVideos = () => backgroundVideos.forEach(startMutedPlayback);
+    const syncPlaybackStates = () => {
+      setIsHeroVideoPlaying(Boolean(heroVideo && !heroVideo.paused));
+      setIsHowItWorksVideoPlaying(Boolean(howItWorksVideo && !howItWorksVideo.paused));
+    };
 
     const resumeWhenVisible = () => {
       if (document.visibilityState === 'visible') startBackgroundVideos();
     };
 
     startBackgroundVideos();
-    backgroundVideos.forEach((video) => {
+    backgroundVideos.forEach(({ video }) => {
       video.addEventListener('loadeddata', startBackgroundVideos);
       video.addEventListener('canplay', startBackgroundVideos);
+      video.addEventListener('play', syncPlaybackStates);
+      video.addEventListener('pause', syncPlaybackStates);
     });
     document.addEventListener('visibilitychange', resumeWhenVisible);
     window.addEventListener('touchstart', startBackgroundVideos, { once: true, passive: true });
     window.addEventListener('pointerdown', startBackgroundVideos, { once: true, passive: true });
 
     return () => {
-      backgroundVideos.forEach((video) => {
+      backgroundVideos.forEach(({ video }) => {
         video.removeEventListener('loadeddata', startBackgroundVideos);
         video.removeEventListener('canplay', startBackgroundVideos);
+        video.removeEventListener('play', syncPlaybackStates);
+        video.removeEventListener('pause', syncPlaybackStates);
       });
       document.removeEventListener('visibilitychange', resumeWhenVisible);
       window.removeEventListener('touchstart', startBackgroundVideos);
@@ -110,6 +144,7 @@ export default function Home() {
       >
         <video
           ref={heroVideoRef}
+          id="hero-background-video"
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
@@ -123,6 +158,16 @@ export default function Home() {
           <source src={HERO_BACKGROUND_VIDEO_URL} type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-slate-100/26 via-slate-200/12 to-slate-100/18" />
+        <button
+          type="button"
+          onClick={() => toggleBackgroundVideo('hero', heroVideoRef.current, setIsHeroVideoPlaying)}
+          aria-label={isHeroVideoPlaying ? 'Pause hero background video' : 'Play hero background video'}
+          title={isHeroVideoPlaying ? 'Pause background video' : 'Play background video'}
+          className="absolute bottom-5 left-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-slate-950/65 text-sm text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-950/85 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-700"
+        >
+          <span aria-hidden="true">{isHeroVideoPlaying ? 'Ⅱ' : '▶'}</span>
+          <span className="sr-only">{isHeroVideoPlaying ? 'Pause' : 'Play'} hero background video</span>
+        </button>
         <div className="container relative z-10 flex min-h-[28rem] items-center justify-center py-20 sm:min-h-[calc(100svh-4rem)] sm:py-28">
           <div className="max-w-4xl text-center text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-white shadow-lg backdrop-blur-sm animate-fade-in">
@@ -212,6 +257,7 @@ export default function Home() {
       <section id="how-it-works" className="relative isolate overflow-hidden bg-slate-950 py-20 sm:py-24 lg:py-28">
         <video
           ref={howItWorksVideoRef}
+          id="how-it-works-background-video"
           className="absolute inset-0 -z-20 h-full w-full object-cover"
           autoPlay
           muted
@@ -225,6 +271,16 @@ export default function Home() {
           <source src={HOW_IT_WORKS_BACKGROUND_VIDEO_URL} type="video/mp4" />
         </video>
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/52 via-slate-900/28 to-slate-950/56" />
+        <button
+          type="button"
+          onClick={() => toggleBackgroundVideo('how-it-works', howItWorksVideoRef.current, setIsHowItWorksVideoPlaying)}
+          aria-label={isHowItWorksVideoPlaying ? 'Pause How It Works background video' : 'Play How It Works background video'}
+          title={isHowItWorksVideoPlaying ? 'Pause background video' : 'Play background video'}
+          className="absolute right-5 bottom-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-slate-950/65 text-sm text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-950/85 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
+        >
+          <span aria-hidden="true">{isHowItWorksVideoPlaying ? 'Ⅱ' : '▶'}</span>
+          <span className="sr-only">{isHowItWorksVideoPlaying ? 'Pause' : 'Play'} How It Works background video</span>
+        </button>
         <div className="container relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#C41E3A] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] mb-4">{t('howit.title')}</h2>
