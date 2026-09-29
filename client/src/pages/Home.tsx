@@ -18,18 +18,11 @@ const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthink
 type BackgroundVideoId = 'hero' | 'how-it-works';
 
 const pricingPlans = [
-  { id: 'free', name: 'Free', price: 0, features: ['50 reviews/mo', 'Basic monitoring', 'Email alerts', '1 platform'], popular: false },
   { id: 'starter', name: 'Starter', price: 29, features: ['100 reviews/mo', 'Sentiment analysis', 'Email + SMS alerts', '3 platforms', 'Basic reports'], popular: false },
   { id: 'basic', name: 'Basic', price: 59, features: ['500 reviews/mo', 'Advanced sentiment', 'Auto-responses (50/mo)', '5 platforms', 'Priority support', 'Custom templates'], popular: true },
   { id: 'advance', name: 'Advance', price: 99, features: ['2,000 reviews/mo', 'Full AI analysis', 'Unlimited auto-responses', '10 platforms', 'API access', 'White-label reports'], popular: false },
   { id: 'premium', name: 'Premium', price: 199, features: ['10,000 reviews/mo', 'Enterprise AI', 'All platforms', 'Dedicated manager', 'Custom integrations', 'SLA guarantee'], popular: false },
   { id: 'enterprise', name: 'Enterprise', price: 499, features: ['Unlimited reviews', 'Custom AI models', 'All platforms', 'On-premise option', 'Custom SLA', '24/7 support'], popular: false },
-];
-
-const testimonials = [
-  { name: 'Sarah Johnson', role: 'Owner, Luxe Boutique', text: 'Eqence transformed how we handle reviews. Our response rate went from 30% to 95% in just one month.', rating: 5 },
-  { name: 'Michael Chen', role: 'CEO, TechGear Store', text: 'The AI auto-responses are incredibly natural. Customers can\'t tell the difference. Our rating went up 0.8 stars.', rating: 5 },
-  { name: 'Emma Williams', role: 'Marketing Dir, FreshFood', text: 'Finally a tool that consolidates all our reviews in one place. The sentiment analytics are game-changing.', rating: 5 },
 ];
 
 export default function Home() {
@@ -127,10 +120,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageToggle />
-            <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-gray-900 px-4 py-2 transition-colors">
-              {t('nav.login')}
-            </Link>
-            <Link href="/register" className="btn-primary text-sm px-4 py-2">
+            <Link href="/waitlist" className="btn-primary text-sm px-4 py-2">
               {t('nav.register')}
             </Link>
           </div>
@@ -172,7 +162,7 @@ export default function Home() {
           <div className="max-w-4xl text-center text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-white shadow-lg backdrop-blur-sm animate-fade-in">
               <span className="h-2 w-2 rounded-full bg-[#ff7289] animate-pulse" />
-              Trusted by 2,000+ Shopify Merchants
+              {t('waitlist.badge')}
             </div>
             <h1 className="mb-6 text-4xl leading-tight font-black text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.7)] sm:text-5xl lg:text-6xl animate-fade-in-up">
               {t('hero.title')}
@@ -181,7 +171,7 @@ export default function Home() {
               {t('hero.subtitle')}
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-in-up animate-delay-200">
-              <Link href="/register" className="btn-primary text-lg px-8 py-4 shadow-lg shadow-black/35">
+              <Link href="/waitlist" className="btn-primary text-lg px-8 py-4 shadow-lg shadow-black/35">
                 {t('hero.cta')}
               </Link>
               <Dialog>
@@ -339,63 +329,15 @@ export default function Home() {
                   ))}
                 </ul>
                 <Link
-                  href="/register"
+                  href={`/waitlist?plan=${plan.id}`}
                   className={`block text-center py-3 rounded-lg font-semibold text-sm transition-all duration-150 ${
                     plan.popular
                       ? 'btn-primary'
                       : 'border-2 border-gray-200 text-gray-700 hover:border-[#C41E3A] hover:text-[#C41E3A]'
                   }`}
                 >
-                  {plan.price === 0 ? 'Start Free' : plan.id === 'enterprise' ? t('pricing.contact') : t('pricing.cta')}
+                  {plan.id === 'enterprise' ? t('pricing.contact') : t('pricing.cta')}
                 </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="section-padding">
-        <div className="container">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{t('testimonials.title')}</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {testimonials.map((item, i) => (
-              <div key={i} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-1 mb-4">
-                  {Array.from({ length: item.rating }).map((_, j) => (
-                    <svg key={j} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">"{item.text}"</p>
-                <div>
-                  <div className="font-semibold text-gray-900 text-sm">{item.name}</div>
-                  <div className="text-xs text-gray-400">{item.role}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Trust/Security Section */}
-      <section className="section-padding bg-gray-900 text-white">
-        <div className="container text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('trust.title')}</h2>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-12">{t('trust.subtitle')}</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-            {[
-              { label: 'SSL Encrypted', icon: '🔒' },
-              { label: 'GDPR Compliant', icon: '🛡️' },
-              { label: '99.9% Uptime', icon: '⚡' },
-              { label: 'SOC 2 Ready', icon: '✅' },
-            ].map((item, i) => (
-              <div key={i} className="text-center">
-                <div className="text-3xl mb-2">{item.icon}</div>
-                <div className="text-sm font-medium text-gray-300">{item.label}</div>
               </div>
             ))}
           </div>
@@ -434,7 +376,6 @@ export default function Home() {
                 <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
-                <li><Link href="/admin" className="hover:text-white transition-colors">{t('footer.admin')}</Link></li>
               </ul>
             </div>
           </div>
