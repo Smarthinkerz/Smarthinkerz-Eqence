@@ -1,0 +1,23 @@
+[Unit]
+Description=Eqence worker (outbox: ingest, draft, publish), health on 127.0.0.1:4420
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=eqence
+Group=eqence
+WorkingDirectory=/opt/eqence/worker
+EnvironmentFile=/etc/eqence/api.env
+Environment=NODE_ENV=production WORKER_HEALTH_PORT=4420
+ExecStart=/usr/bin/node /opt/eqence/worker/index.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/eqence
+
+[Install]
+WantedBy=multi-user.target

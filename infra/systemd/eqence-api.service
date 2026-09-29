@@ -1,0 +1,23 @@
+[Unit]
+Description=Eqence API (Hono + Better Auth) on 127.0.0.1:4410
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=eqence
+Group=eqence
+WorkingDirectory=/opt/eqence/api
+EnvironmentFile=/etc/eqence/api.env
+Environment=NODE_ENV=production PORT=4410 HOST=127.0.0.1
+ExecStart=/usr/bin/node /opt/eqence/api/index.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/eqence
+
+[Install]
+WantedBy=multi-user.target

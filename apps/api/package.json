@@ -1,0 +1,26 @@
+{
+  "name": "@eqence/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/index.mjs --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+    "migrate:build": "esbuild src/migrate.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/migrate.mjs --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@eqence/connectors": "workspace:*",
+    "@eqence/db": "workspace:*",
+    "@hono/node-server": "2.1.3",
+    "better-auth": "1.7.6",
+    "drizzle-orm": "0.45.3",
+    "hono": "4.13.11",
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5",
+    "esbuild": "0.28.2",
+    "tsx": "4.23.15"
+  }
+}
