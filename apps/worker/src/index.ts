@@ -1,18 +1,15 @@
 // eqence-worker: runs outbox jobs (ingest, draft, publish) and scheduled syncs.
 // Health on 127.0.0.1:WORKER_HEALTH_PORT reports the last successful tick.
 import { createServer } from 'node:http';
-import pg from 'pg';
-import { tick, type Handler } from './outbox';
+import { createDb } from '@eqence/db';
+import { buildHandlers } from './handlers';
+import { tick } from './outbox';
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('missing required environment variable DATABASE_URL');
 const healthPort = Number(process.env.WORKER_HEALTH_PORT || 4420);
-const pool = new pg.Pool({ connectionString: url, max: 4 });
-
-// Topic handlers are registered here as each phase adds work (Phase 2: ingest/draft/publish).
-const handlers: Record<string, Handler> = {
-  'system.noop': async () => {},
-};
+const { db, pool } = createDb(url);
+const handlers = buildHandlers(db);
 
 let lastTickAt = 0;
 let lastError: string | null = null;

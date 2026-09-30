@@ -1,0 +1,14 @@
+{
+  "name": "@eqence/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@eqence/ai": "workspace:*",
+    "@eqence/connectors": "workspace:*",
+    "@eqence/db": "workspace:*",
+    "@eqence/vault": "workspace:*",
+    "drizzle-orm": "0.45.3"
+  }
+}

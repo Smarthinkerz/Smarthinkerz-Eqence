@@ -7,8 +7,12 @@
     "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/index.mjs --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\""
   },
   "dependencies": {
+    "@eqence/ai": "workspace:*",
     "@eqence/connectors": "workspace:*",
+    "@eqence/core": "workspace:*",
     "@eqence/db": "workspace:*",
+    "@eqence/vault": "workspace:*",
+    "drizzle-orm": "0.45.3",
     "pg": "8.23.0"
   },
   "devDependencies": {

@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { auth, type AuthSession } from './auth';
 import { db } from './db';
 import { env } from './env';
+import { mountRoutes } from './routes';
 
 type Vars = { session: AuthSession['session']; user: AuthSession['user'] };
 
@@ -51,6 +52,8 @@ app.get('/api/v1/me', async (c) => {
     },
   });
 });
+
+mountRoutes(app);
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 app.onError((err, c) => {
