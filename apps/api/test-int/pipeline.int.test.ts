@@ -42,7 +42,8 @@ before(async () => {
 });
 
 after(async () => {
-  await db.delete(outbox).where(sql`payload::text like ${'%' + tenantId + '%'} or payload->>'interactionId' in (select id::text from interactions where tenant_id = ${tenantId})`);
+  await db.delete(outbox).where(sql`payload->>'interactionId' in (select id::text from interactions where tenant_id = ${tenantId})
+    or payload->>'responseId' in (select id::text from responses where tenant_id = ${tenantId})`);
   await db.delete(tenants).where(eq(tenants.id, tenantId));
   await db.delete(user).where(eq(user.id, uid));
   await pool.end();
