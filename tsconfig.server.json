@@ -10,5 +10,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["apps/api/src", "apps/api/test", "apps/worker/src", "packages/*/src", "packages/*/test"]
+  "include": ["apps/api/src", "apps/api/test", "apps/api/test-int", "apps/worker/src", "packages/*/src", "packages/*/test"]
 }
