@@ -1,6 +1,7 @@
 import type { Connector, Source } from './types';
 
 export * from './types';
+export * from './judgeme';
 
 const registry = new Map<Source, Connector>();
 
