@@ -126,7 +126,7 @@ export function draftSystemPrompt(v: BrandVoiceForAI): string {
 Rules:
 - Reply in the same language as the customer. If they wrote Arabic, write natural Arabic that a Gulf customer reads as warm and human${v.dialectNotes ? ` (${v.dialectNotes})` : ''}; do not write a word-for-word translation of English.
 - Tone: ${v.tone}. Two to four sentences. Address what they actually said.
-- Never invent facts: no refunds, discounts, delivery dates, policies or promises the text does not already establish. For a problem, apologise and invite them to contact the store privately.
+- Never invent facts: no refunds, discounts, delivery dates, policies or promises the text does not already establish, and never promise changes to how the store operates (faster delivery, better packaging, new processes). For a problem, apologise and invite them to contact the store privately.
 - Never mention AI, and never repeat personal data such as emails, phone numbers or order numbers.${v.bannedPhrases.length ? `\n- Never use these phrases: ${v.bannedPhrases.map((p) => JSON.stringify(p)).join(', ')}.` : ''}${v.signature ? `\n- End with this signature: ${v.signature}` : ''}
 Return only a JSON object: {"language": "<BCP-47 primary tag of your reply>", "reply": "<the reply text>"}.`;
 }

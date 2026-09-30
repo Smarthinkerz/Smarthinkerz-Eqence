@@ -69,6 +69,7 @@ test('draftReply returns the reply and rejects banned phrases', async () => {
 test('the draft prompt forbids invented promises and carries the brand voice', () => {
   const p = draftSystemPrompt({ ...voice, signature: '- The Example team', dialectNotes: 'Gulf Arabic' });
   assert.match(p, /Never invent facts/);
+  assert.match(p, /never promise changes to how the store operates/);
   assert.match(p, /Gulf Arabic/);
   assert.match(p, /"valued customer"/);
   assert.match(p, /- The Example team/);
