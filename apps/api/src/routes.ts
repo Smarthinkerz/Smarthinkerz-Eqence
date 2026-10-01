@@ -1,6 +1,6 @@
 import {
   activeLadder, aiConfigFromEnv, applyHubEvent, approveResponse, checkoutUrl, draftForInteraction, editResponse,
-  enqueue, type HubPayload, judgeme, loadConnection, NotAllowed, planBySlug, QuotaExceeded, quotaFor,
+  enqueue, type HubPayload, judgeme, loadConnection, NotAllowed, QuotaExceeded, quotaFor, selfServePlans,
   rejectResponse, vaultFromEnv, verifyHubSignature, webhookUrlFor,
 } from '@eqence/core';
 import { reviewIdFromWebhook, verifyJudgeMeWebhook, JudgeMeError } from '@eqence/connectors';
@@ -153,8 +153,8 @@ export function mountRoutes(app: Hono<any>) {
 
   app.get('/api/v1/billing/checkout-url', async (c) => {
     const t = await tenantOf(c);
-    const plan = planBySlug(c.req.query('plan'));
-    if (!plan) return c.json({ error: activeLadder().length ? 'unknown plan' : 'pricing is not confirmed yet' }, 409);
+    const plan = selfServePlans().find((p) => p.slug === c.req.query('plan'));
+    if (!plan) return c.json({ error: activeLadder().length ? 'unknown or contact-only plan' : 'pricing is not confirmed yet' }, 409);
     const u = c.get('user') as { email: string };
     const url = checkoutUrl({
       hubBaseUrl: process.env.HUB_BASE_URL || 'https://smarthinkerz.com',

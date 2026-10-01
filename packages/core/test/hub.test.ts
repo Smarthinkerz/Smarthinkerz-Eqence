@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { test } from 'node:test';
 import { checkoutUrl, verifyHubSignature } from '../src/hub';
-import { SITE_LADDER } from '../src/pricing';
+import { selfServePlans, SITE_LADDER } from '../src/pricing';
 
 const sign = (b: string, s: string) => 'sha256=' + createHmac('sha256', s).update(b).digest('hex');
 
@@ -36,4 +36,10 @@ test('an invalid referral code is dropped, not forwarded', () => {
     returnUrl: 'https://www.eqence.com/x', ref: '<script>',
   }));
   assert.equal(url.searchParams.has('ref'), false);
+});
+
+test('site ladder: annual is exactly 10x monthly; Enterprise is contact-only', () => {
+  for (const p of SITE_LADDER) assert.equal(p.yearlyUsd, p.monthlyUsd * 10, p.slug);
+  assert.deepEqual(SITE_LADDER.map((p) => p.monthlyUsd), [29, 59, 99, 199, 499]);
+  assert.deepEqual(selfServePlans(SITE_LADDER).map((p) => p.slug), ['eqence-starter', 'eqence-basic', 'eqence-advance', 'eqence-premium']);
 });

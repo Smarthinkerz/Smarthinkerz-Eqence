@@ -17,8 +17,13 @@
  *
  *   Dry run (default, changes nothing):
  *     node scripts/register-hub-partner.mjs --ladder site
- *   Apply (Fathi runs this):
- *     HUB_ADMIN_TOKEN=... PARTNER_SECRET_EQENCE=... node scripts/register-hub-partner.mjs --ladder site --apply
+ *   Apply (Fathi runs this). The secret can be read by name from a local env file, so it
+ *   never appears on the command line or in shell history:
+ *     HUB_ADMIN_TOKEN=... node scripts/register-hub-partner.mjs --ladder site --secret-file "E:\CSB\Secrets\env" --apply
+ *   (reads the line named EQENCE_HUB_PARTNER_SECRET), or set PARTNER_SECRET_EQENCE instead.
+ *
+ * Contact-only plans (Enterprise) are compared but never registered: they are not sold
+ * through checkout.
  *
  * PARTNER_SECRET_EQENCE must be at least 32 characters and must equal HUB_PARTNER_SECRET in
  * /etc/eqence/api.env on csb-fra, byte for byte. This script never generates or prints it.
@@ -31,7 +36,21 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
 const REPLACE = args.includes('--replace');
-const ladderArg = args[args.indexOf('--ladder') + 1];
+const ladderArg = args.includes('--ladder') ? args[args.indexOf('--ladder') + 1] : undefined;
+const secretFile = args.includes('--secret-file') ? args[args.indexOf('--secret-file') + 1] : undefined;
+const SECRET_NAME = 'EQENCE_HUB_PARTNER_SECRET';
+
+// Reads one variable by name from an env-style file: trims spaces around "=", one layer
+// of quotes and a trailing carriage return. Never prints the value.
+function readSecretFromFile(file) {
+  if (!fs.existsSync(file)) fail(`--secret-file ${file} not found`);
+  const hits = fs.readFileSync(file, 'utf8').split('\n').map((l) => l.replace(/\r$/, ''))
+    .filter((l) => l.slice(0, l.indexOf('=')).trim() === SECRET_NAME);
+  if (hits.length !== 1) fail(`expected exactly one ${SECRET_NAME} line in ${file}, found ${hits.length}`);
+  let v = hits[0].slice(hits[0].indexOf('=') + 1).trim();
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1).trim();
+  return v;
+}
 
 const HUB_BASE_URL = (process.env.HUB_BASE_URL || 'https://smarthinkerz.com').replace(/\/+$/, '');
 const API_BASE_URL = (process.env.API_BASE_URL || 'https://api.eqence.com').replace(/\/+$/, '');
@@ -54,8 +73,11 @@ function readLadder(name) {
   const src = fs.readFileSync(path.join(ROOT, 'packages/core/src/pricing.ts'), 'utf8');
   const constName = name === 'site' ? 'SITE_LADDER' : 'METERED_LADDER';
   const block = src.slice(src.indexOf(`export const ${constName}`), src.indexOf('];', src.indexOf(`export const ${constName}`)));
-  const plans = [...block.matchAll(/slug: '([^']+)', name: '([^']+)', monthlyUsd: (\d+(?:\.\d+)?), yearlyUsd: (null|\d+(?:\.\d+)?)/g)]
-    .map(([, slug, name, m, y]) => ({ slug, name, monthlyUsd: Number(m), yearlyUsd: y === 'null' ? null : Number(y) }));
+  const plans = [...block.matchAll(/\{([^}]*)\}/g)].map(([, body]) => {
+    const str = (k) => body.match(new RegExp(`${k}: '([^']+)'`))?.[1];
+    const num = (k) => { const v = body.match(new RegExp(`${k}: (null|-?\\d+(?:\\.\\d+)?)`))?.[1]; return v === undefined || v === 'null' ? null : Number(v); };
+    return { slug: str('slug'), name: str('name'), monthlyUsd: num('monthlyUsd'), yearlyUsd: num('yearlyUsd'), contactOnly: /contactOnly: true/.test(body) };
+  }).filter((p) => p.slug);
   if (!plans.length) fail(`could not parse ${constName} from packages/core/src/pricing.ts`);
   return plans;
 }
@@ -93,7 +115,7 @@ const rowsOf = (d, key) => (Array.isArray(d) ? d : d?.[key] ?? []);
 
 async function main() {
   const ladder = readLadder(ladderArg);
-  console.log(`Ladder:   ${ladderArg}: ${ladder.map((p) => `${p.slug} $${p.monthlyUsd}`).join(', ')}`);
+  console.log(`Ladder:   ${ladderArg}: ${ladder.map((p) => `${p.slug} $${p.monthlyUsd}/$${p.yearlyUsd}${p.contactOnly ? ' (contact only, not registered)' : ''}`).join(', ')}`);
 
   const live = await readLive();
   if (!live.ok) fail(`the live Eqence API is not reachable (${live.reason}), so its prices cannot be verified`);
@@ -102,7 +124,7 @@ async function main() {
   for (const p of ladder) {
     const l = live.plans.find((x) => x.slug === p.slug);
     if (!l) problems.push(`${p.slug} missing from the live API`);
-    else if (l.monthlyUsd !== p.monthlyUsd || l.yearlyUsd !== p.yearlyUsd) problems.push(`${p.slug}: source $${p.monthlyUsd}/$${p.yearlyUsd}, live $${l.monthlyUsd}/$${l.yearlyUsd}`);
+    else if (l.monthlyUsd !== p.monthlyUsd || l.yearlyUsd !== p.yearlyUsd || !!l.contactOnly !== p.contactOnly) problems.push(`${p.slug}: source $${p.monthlyUsd}/$${p.yearlyUsd}, live $${l.monthlyUsd}/$${l.yearlyUsd}`);
   }
   for (const l of live.plans) if (!ladder.find((p) => p.slug === l.slug)) problems.push(`live API serves extra plan ${l.slug}`);
   if (problems.length) fail('the live API and the source ladder disagree', problems);
@@ -120,7 +142,7 @@ async function main() {
   if (collisions.length) fail('slugs collide with the Hub\'s in-code plans (the Hub would charge its own price)', collisions);
   console.log(`Product:  "${PRODUCT}" from the Hub's lib/plans.ts; no slug collisions`);
 
-  const secret = (process.env.PARTNER_SECRET_EQENCE || process.env.PARTNER_SECRET || '').trim();
+  const secret = secretFile ? readSecretFromFile(secretFile) : (process.env.PARTNER_SECRET_EQENCE || process.env.PARTNER_SECRET || '').trim();
   const partner = {
     name: DISPLAY_NAME, appId: APP_ID, product: PRODUCT,
     returnUrl: `${APP_BASE_URL}/app/billing/return`,
@@ -128,7 +150,7 @@ async function main() {
     webhookUrl: `${API_BASE_URL}/api/hub/webhook`,
     secret, events: EVENTS,
   };
-  const planRows = ladder.map((p) => ({
+  const planRows = ladder.filter((p) => !p.contactOnly).map((p) => ({
     appId: APP_ID, slug: p.slug, name: p.name, product: PRODUCT, displayName: DISPLAY_NAME, oneTime: false,
     monthlyAmount: p.monthlyUsd, yearlyAmount: p.yearlyUsd, currency: CURRENCY, productUrl: APP_BASE_URL,
   }));
@@ -139,7 +161,7 @@ async function main() {
 
   if (!APPLY) { console.log('\nDry run complete. Nothing was sent. Re-run with --apply to register.'); return; }
 
-  if (secret.length < 32) fail(`PARTNER_SECRET_EQENCE must be set and at least 32 characters (got ${secret.length})`);
+  if (secret.length < 32) fail(`the partner secret must be set and at least 32 characters (got ${secret.length})`);
   let token = (process.env.HUB_ADMIN_TOKEN || '').trim();
   if (token) {
     const probe = await api('/admin/api/partners', { token });

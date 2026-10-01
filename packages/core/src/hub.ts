@@ -11,7 +11,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { auditLog, hubEvents, tenants, user, type Db } from '@eqence/db';
 import { and, eq, sql } from 'drizzle-orm';
-import { planBySlug, type Plan } from './pricing';
+import { selfServePlans, type Plan } from './pricing';
 
 export const HUB_APP_ID = 'eqence';
 
@@ -86,6 +86,9 @@ export async function applyHubEvent(db: Db, p: HubPayload): Promise<HubOutcome> 
     // Another app's payment must never grant an Eqence plan.
     if (appId !== HUB_APP_ID) return finish(`ignored:app_id=${appId ?? 'none'}`);
 
+    // A Hub-side connectivity check: signature verified, nothing else happens.
+    if (event === 'test.ping') return finish('test_ok');
+
     // Find the workspace: external_ref carries the tenant id from our checkout link;
     // fall back to the buyer's email only when the ref is absent.
     let tenantId: string | null = null;
@@ -106,7 +109,8 @@ export async function applyHubEvent(db: Db, p: HubPayload): Promise<HubOutcome> 
 
     if (event === 'payment.success') {
       const slug = String(p.plan_slug ?? p.plan ?? '');
-      const plan = planBySlug(slug);
+      // Only self-serve plans can be bought; a contact-only slug never grants through checkout.
+      const plan = selfServePlans().find((x) => x.slug === slug);
       if (!plan) return finish(`ignored:unknown_plan=${slug}`, tenantId);
       const cycle = p.cycle === 'yearly' ? 'yearly' : 'monthly';
       const [t] = await tx.select().from(tenants).where(eq(tenants.id, tenantId));

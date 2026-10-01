@@ -163,6 +163,25 @@ test('malformed deliveries are rejected', async () => {
   assert.equal((await deliver(notJson, sign(notJson))).status, 400);
 });
 
+test('test.ping from the Hub is verified and changes nothing', async () => {
+  const before = await tenant();
+  const r = await deliver(payload('test.ping'));
+  assert.equal(r.status, 200);
+  assert.equal(r.body.outcome, 'test_ok');
+  const after = await tenant();
+  assert.equal(after.planStatus, before.planStatus);
+  assert.equal(after.planExpiresAt?.getTime(), before.planExpiresAt?.getTime());
+  const forged = JSON.stringify(payload('test.ping'));
+  assert.equal((await deliver(forged, sign(forged, 'wrong'))).status, 401, 'a ping with the wrong secret is refused');
+});
+
+test('Enterprise is contact-only: a checkout payment for it grants nothing', async () => {
+  const before = await tenant();
+  const r = await deliver(payload('payment.success', { plan: 'eqence-enterprise', plan_slug: 'eqence-enterprise' }));
+  assert.equal(r.body.outcome, 'ignored:unknown_plan=eqence-enterprise');
+  assert.equal((await tenant()).plan, before.plan);
+});
+
 test('every accepted delivery left exactly one dedupe row', async () => {
   const rows = await db.select().from(hubEvents).where(like(hubEvents.eventId, `%${uid.slice(-8)}`));
   assert.ok(rows.length >= 8);
