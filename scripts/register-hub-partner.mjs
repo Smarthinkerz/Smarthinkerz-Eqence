@@ -140,15 +140,14 @@ async function main() {
   const PRODUCT = hub.products[0];
   // The Hub declares which Eqence slugs checkout may sell (REGISTRY_PRODUCTS.eqence); they
   // must be exactly our self-serve and contact-only plans, or the two sides disagree.
-  const reg = fs.readFileSync(HUB_PLANS_FILE, 'utf8').match(/"eqence":\s*\{([\s\S]*?)
-\s*\},/)?.[1];
+  const reg = fs.readFileSync(HUB_PLANS_FILE, 'utf8').match(/"eqence":\s*\{([\s\S]*?)\n\s*\},/)?.[1];
   if (reg) {
-    const list = (k) => (reg.match(new RegExp(`${k}:\s*\[([^\]]*)\]`))?.[1] ?? '').match(/"([^"]+)"/g)?.map((x) => x.slice(1, -1)).sort() ?? [];
+    const list = (k) => (reg.match(new RegExp(`${k}:\\s*\\[([^\\]]*)\\]`))?.[1] ?? '').match(/"([^"]+)"/g)?.map((x) => x.slice(1, -1)).sort() ?? [];
     const want = (contact) => ladder.filter((p) => !!p.contactOnly === contact).map((p) => p.slug).sort();
     const diffs = [];
     if (JSON.stringify(list('checkoutSlugs')) !== JSON.stringify(want(false))) diffs.push(`Hub checkoutSlugs ${JSON.stringify(list('checkoutSlugs'))} vs ladder ${JSON.stringify(want(false))}`);
     if (JSON.stringify(list('contactOnlySlugs')) !== JSON.stringify(want(true))) diffs.push(`Hub contactOnlySlugs ${JSON.stringify(list('contactOnlySlugs'))} vs ladder ${JSON.stringify(want(true))}`);
-    if (diffs.length) fail('the Hub's declared Eqence slugs do not match the ladder', diffs);
+    if (diffs.length) fail("the Hub's declared Eqence slugs do not match the ladder", diffs);
     console.log('Hub slugs: OK, checkout and contact-only slugs match the ladder');
   }
   const collisions = ladder.filter((p) => hub.inCodeSlugs.has(p.slug)).map((p) => p.slug);
