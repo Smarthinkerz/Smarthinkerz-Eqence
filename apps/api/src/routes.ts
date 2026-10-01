@@ -1,6 +1,7 @@
 import {
-  approveResponse, draftForInteraction, editResponse, enqueue, judgeme, loadConnection, NotAllowed,
-  QuotaExceeded, quotaFor, rejectResponse, vaultFromEnv, webhookUrlFor, aiConfigFromEnv,
+  activeLadder, aiConfigFromEnv, applyHubEvent, approveResponse, checkoutUrl, draftForInteraction, editResponse,
+  enqueue, type HubPayload, judgeme, loadConnection, NotAllowed, planBySlug, QuotaExceeded, quotaFor,
+  rejectResponse, vaultFromEnv, verifyHubSignature, webhookUrlFor,
 } from '@eqence/core';
 import { reviewIdFromWebhook, verifyJudgeMeWebhook, JudgeMeError } from '@eqence/connectors';
 import { auditLog, brandVoices, connections, interactions, responses, tenants } from '@eqence/db';
@@ -144,6 +145,35 @@ export function mountRoutes(app: Hono<any>) {
   app.get('/api/v1/usage', async (c) => {
     const t = await tenantOf(c);
     return c.json({ aiActions: await quotaFor(db, t.id) });
+  });
+
+  /* ── billing through the SmarThinkerz Hub ── */
+  // Public: the plans checkout will charge. Empty until a ladder is confirmed (PRICING_LADDER).
+  app.get('/api/pricing', (c) => c.json({ ladder: process.env.PRICING_LADDER || null, plans: activeLadder() }));
+
+  app.get('/api/v1/billing/checkout-url', async (c) => {
+    const t = await tenantOf(c);
+    const plan = planBySlug(c.req.query('plan'));
+    if (!plan) return c.json({ error: activeLadder().length ? 'unknown plan' : 'pricing is not confirmed yet' }, 409);
+    const u = c.get('user') as { email: string };
+    const url = checkoutUrl({
+      hubBaseUrl: process.env.HUB_BASE_URL || 'https://smarthinkerz.com',
+      plan, cycle: c.req.query('cycle') === 'yearly' ? 'yearly' : 'monthly', tenantId: t.id, email: u.email,
+      returnUrl: `${env.webUrl}/app/billing/return`, ref: c.req.query('ref') ?? null,
+    });
+    return c.json({ url });
+  });
+
+  // Hub partner webhook. Fails closed: no secret configured means nothing is accepted.
+  app.post('/api/hub/webhook', async (c) => {
+    const secret = process.env.HUB_PARTNER_SECRET || '';
+    if (!secret) return c.json({ error: 'webhook receiver not configured' }, 503);
+    const raw = Buffer.from(await c.req.arrayBuffer());
+    if (!verifyHubSignature(raw, c.req.header('x-smarthinkerz-signature'), secret)) return c.json({ error: 'invalid signature' }, 401);
+    let payload: HubPayload;
+    try { payload = JSON.parse(raw.toString('utf8')); } catch { return c.json({ error: 'invalid JSON' }, 400); }
+    const result = await applyHubEvent(db, payload);
+    return c.json({ outcome: result.outcome }, result.status);
   });
 
   /* ── Judge.me webhook: signature over the raw body, keyed by that store's token ── */
