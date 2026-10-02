@@ -8,6 +8,11 @@ import SignIn from "./pages/app/SignIn";
 import ResetPassword from "./pages/app/ResetPassword";
 import Connections from "./pages/app/Connections";
 import BrandVoice from "./pages/app/BrandVoice";
+import Billing, { BillingReturn } from "./pages/app/Billing";
+import { captureRef } from "./lib/ref";
+
+// Keep a trainee referral code (?ref=CODE) for the Hub checkout.
+captureRef();
 
 // Eqence is pre-launch: accounts, payment and the dashboard do not exist yet,
 // so every old entry point leads to the waitlist.
@@ -23,6 +28,8 @@ function Router() {
       <Route path="/app/reset-password" component={ResetPassword} />
       <Route path="/app/connections" component={Connections} />
       <Route path="/app/brand-voice" component={BrandVoice} />
+      <Route path="/app/billing" component={Billing} />
+      <Route path="/app/billing/return" component={BillingReturn} />
       {retiredPaths.map((path) => (
         <Route key={path} path={path}>
           <Redirect to="/waitlist" replace />

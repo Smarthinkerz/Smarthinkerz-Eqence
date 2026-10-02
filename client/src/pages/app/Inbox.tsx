@@ -131,7 +131,7 @@ function ReviewCard({ row, onChange, canDraft }: { row: InteractionRow; onChange
       ) : (
         <div className="mt-4">
           <button className="px-4 py-2 text-sm rounded-lg border border-[#C41E3A] text-[#C41E3A] hover:bg-red-50 disabled:opacity-60"
-            disabled={busy || !canDraft} title={canDraft ? '' : 'Your plan has no AI replies left this month'}
+            disabled={busy || !canDraft} title={canDraft ? '' : 'No AI replies available: choose or upgrade a plan under Billing'}
             onClick={() => run(() => api(`/api/v1/interactions/${row.id}/draft`, { method: 'POST', body: {} }))}>
             {busy ? 'Drafting…' : 'Draft a reply'}
           </button>

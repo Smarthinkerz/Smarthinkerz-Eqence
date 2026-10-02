@@ -7,6 +7,7 @@ const nav = [
   { href: '/app', label: 'Inbox' },
   { href: '/app/connections', label: 'Connections' },
   { href: '/app/brand-voice', label: 'Brand voice' },
+  { href: '/app/billing', label: 'Billing' },
 ];
 
 export function useMe() {
