@@ -19,8 +19,9 @@
  *     node scripts/register-hub-partner.mjs --ladder site
  *   Apply (Fathi runs this). The secret can be read by name from a local env file, so it
  *   never appears on the command line or in shell history:
- *     HUB_ADMIN_TOKEN=... node scripts/register-hub-partner.mjs --ladder site --secret-file "E:\CSB\Secrets\env" --apply
- *   (reads the line named EQENCE_HUB_PARTNER_SECRET), or set PARTNER_SECRET_EQENCE instead.
+ *     node scripts/register-hub-partner.mjs --ladder site --secret-file "E:\CSB\Secrets\env" --apply
+ *   (reads the lines named EQENCE_HUB_PARTNER_SECRET and HUB_ADMIN_TOKEN), or set
+ *   PARTNER_SECRET_EQENCE / HUB_ADMIN_TOKEN in the environment instead.
  *
  * Contact-only plans (Enterprise) are compared but never registered: they are not sold
  * through checkout.
@@ -42,11 +43,11 @@ const SECRET_NAME = 'EQENCE_HUB_PARTNER_SECRET';
 
 // Reads one variable by name from an env-style file: trims spaces around "=", one layer
 // of quotes and a trailing carriage return. Never prints the value.
-function readSecretFromFile(file) {
+function readSecretFromFile(file, name = SECRET_NAME) {
   if (!fs.existsSync(file)) fail(`--secret-file ${file} not found`);
   const hits = fs.readFileSync(file, 'utf8').split('\n').map((l) => l.replace(/\r$/, ''))
-    .filter((l) => l.slice(0, l.indexOf('=')).trim() === SECRET_NAME);
-  if (hits.length !== 1) fail(`expected exactly one ${SECRET_NAME} line in ${file}, found ${hits.length}`);
+    .filter((l) => l.slice(0, l.indexOf('=')).trim() === name);
+  if (hits.length !== 1) fail(`expected exactly one ${name} line in ${file}, found ${hits.length}`);
   let v = hits[0].slice(hits[0].indexOf('=') + 1).trim();
   if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1).trim();
   return v;
@@ -174,7 +175,8 @@ async function main() {
   if (!APPLY) { console.log('\nDry run complete. Nothing was sent. Re-run with --apply to register.'); return; }
 
   if (secret.length < 32) fail(`the partner secret must be set and at least 32 characters (got ${secret.length})`);
-  let token = (process.env.HUB_ADMIN_TOKEN || '').trim();
+  // The Hub admin token may also come from the same env file (line named HUB_ADMIN_TOKEN).
+  let token = (process.env.HUB_ADMIN_TOKEN || (secretFile ? readSecretFromFile(secretFile, 'HUB_ADMIN_TOKEN') : '')).trim();
   if (token) {
     const probe = await api('/admin/api/partners', { token });
     if (!probe.ok) fail(`HUB_ADMIN_TOKEN was rejected (HTTP ${probe.status})`);
