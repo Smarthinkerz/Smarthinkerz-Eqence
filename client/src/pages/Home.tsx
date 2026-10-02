@@ -3,30 +3,26 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
 import { LanguageToggle } from '../components/LanguageToggle';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from '../components/ui/dialog';
 
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
-const DEMO_VIDEO_URL = 'https://raw.githubusercontent.com/Smarthinkerz/Smarthinkerz-Eqence/246f7d3/client/public/media/eqence-demo.mp4';
 type BackgroundVideoId = 'hero' | 'how-it-works';
 
 const pricingPlans = [
-  { id: 'starter', name: 'Starter', price: 29, features: ['100 reviews/mo', 'Sentiment analysis', 'Email + SMS alerts', '3 platforms', 'Basic reports'], popular: false },
-  { id: 'basic', name: 'Basic', price: 59, features: ['500 reviews/mo', 'Advanced sentiment', 'Auto-responses (50/mo)', '5 platforms', 'Priority support', 'Custom templates'], popular: true },
-  { id: 'advance', name: 'Advance', price: 99, features: ['2,000 reviews/mo', 'Full AI analysis', 'Unlimited auto-responses', '10 platforms', 'API access', 'White-label reports'], popular: false },
-  { id: 'premium', name: 'Premium', price: 199, features: ['10,000 reviews/mo', 'Enterprise AI', 'All platforms', 'Dedicated manager', 'Custom integrations', 'SLA guarantee'], popular: false },
-  { id: 'enterprise', name: 'Enterprise', price: 499, features: ['Unlimited reviews', 'Custom AI models', 'All platforms', 'On-premise option', 'Custom SLA', '24/7 support'], popular: false },
+  { id: 'starter', name: 'Starter', price: 29, replies: 100, sources: 1, popular: false },
+  { id: 'basic', name: 'Basic', price: 59, replies: 500, sources: 3, popular: false },
+  { id: 'advance', name: 'Advance', price: 99, replies: 2000, sources: 5, popular: false },
+  { id: 'premium', name: 'Premium', price: 199, replies: 10000, sources: 10, popular: false },
+  { id: 'enterprise', name: 'Enterprise', price: 499, replies: -1, sources: -1, popular: false },
 ];
 
 export default function Home() {
   const { t } = useI18n();
+  const planFeatures = (plan: (typeof pricingPlans)[number]) => [
+    `${plan.replies === -1 ? t('pricing.unlimited') : plan.replies.toLocaleString()} ${t('pricing.f.replies')}`,
+    `${plan.sources === -1 ? t('pricing.unlimited') : plan.sources} ${t(plan.sources === 1 ? 'pricing.f.source' : 'pricing.f.sources')}`,
+    t('pricing.f.included'),
+  ];
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const howItWorksVideoRef = useRef<HTMLVideoElement>(null);
   const manuallyPausedVideos = useRef(new Set<BackgroundVideoId>());
@@ -120,7 +116,10 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageToggle />
-            <Link href="/waitlist" className="btn-primary text-sm px-4 py-2">
+            <Link href="/app/sign-in" className="text-sm font-medium text-gray-700 hover:text-gray-900 px-2 py-2 transition-colors">
+              {t('nav.login')}
+            </Link>
+            <Link href="/app/sign-in?mode=up" className="btn-primary text-sm px-4 py-2">
               {t('nav.register')}
             </Link>
           </div>
@@ -162,7 +161,7 @@ export default function Home() {
           <div className="max-w-4xl text-center text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-white shadow-lg backdrop-blur-sm animate-fade-in">
               <span className="h-2 w-2 rounded-full bg-[#ff7289] animate-pulse" />
-              {t('waitlist.badge')}
+              {t('hero.badge')}
             </div>
             <h1 className="mb-6 text-4xl leading-tight font-black text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.7)] sm:text-5xl lg:text-6xl animate-fade-in-up">
               {t('hero.title')}
@@ -171,45 +170,9 @@ export default function Home() {
               {t('hero.subtitle')}
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-in-up animate-delay-200">
-              <Link href="/waitlist" className="btn-primary text-lg px-8 py-4 shadow-lg shadow-black/35">
+              <Link href="/app/sign-in?mode=up" className="btn-primary text-lg px-8 py-4 shadow-lg shadow-black/35">
                 {t('hero.cta')}
               </Link>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button className="rounded-lg border border-white/35 bg-white px-8 py-4 text-lg font-semibold text-[#C41E3A] shadow-lg backdrop-blur-sm transition-all duration-150 hover:bg-white hover:text-[#C41E3A] active:scale-[0.99] active:opacity-90">
-                    {t('hero.cta2')}
-                  </button>
-                </DialogTrigger>
-                <DialogContent
-                  showCloseButton={false}
-                  className="w-[min(96vw,72rem)] max-w-[min(96vw,72rem)] gap-0 overflow-hidden border-0 bg-slate-950 p-0 shadow-2xl sm:max-w-[min(96vw,72rem)]"
-                >
-                  <DialogTitle className="sr-only">Eqence product demo</DialogTitle>
-                  <DialogDescription className="sr-only">
-                    A 50-second Eqence product demonstration.
-                  </DialogDescription>
-                  <div className="relative aspect-video bg-black">
-                    <video
-                      className="h-full w-full"
-                      controls
-                      autoPlay
-                      playsInline
-                      preload="metadata"
-                      aria-label="Eqence product demonstration"
-                    >
-                      <source src={DEMO_VIDEO_URL} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                    <DialogClose
-                      aria-label="Close demo"
-                      className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 text-2xl leading-none text-white shadow-lg transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
-                    >
-                      <span aria-hidden="true">×</span>
-                      <span className="sr-only">Close demo</span>
-                    </DialogClose>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
         </div>
@@ -227,9 +190,9 @@ export default function Home() {
               { key: 'monitoring', icon: '🔍', color: 'from-blue-500 to-blue-600' },
               { key: 'sentiment', icon: '🧠', color: 'from-purple-500 to-purple-600' },
               { key: 'autoresponse', icon: '🤖', color: 'from-green-500 to-green-600' },
-              { key: 'analytics', icon: '📊', color: 'from-orange-500 to-orange-600' },
+              { key: 'analytics', icon: '✍️', color: 'from-orange-500 to-orange-600' },
               { key: 'notifications', icon: '🔔', color: 'from-red-500 to-red-600' },
-              { key: 'integrations', icon: '🛒', color: 'from-indigo-500 to-indigo-600' },
+              { key: 'integrations', icon: '🌍', color: 'from-indigo-500 to-indigo-600' },
             ].map((feature, i) => (
               <div key={i} className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-xl mb-4 shadow-sm`}>
@@ -319,7 +282,7 @@ export default function Home() {
                   <span className="text-gray-500">{t('pricing.mo')}</span>
                 </div>
                 <ul className="space-y-2.5 mb-6">
-                  {plan.features.map((f, i) => (
+                  {planFeatures(plan).map((f, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
                       <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -328,16 +291,17 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href={`/waitlist?plan=${plan.id}`}
-                  className={`block text-center py-3 rounded-lg font-semibold text-sm transition-all duration-150 ${
-                    plan.popular
-                      ? 'btn-primary'
-                      : 'border-2 border-gray-200 text-gray-700 hover:border-[#C41E3A] hover:text-[#C41E3A]'
-                  }`}
-                >
-                  {plan.id === 'enterprise' ? t('pricing.contact') : t('pricing.cta')}
-                </Link>
+                {plan.id === 'enterprise' ? (
+                  <a href="mailto:reply@smarthinkerz.com?subject=Eqence%20Enterprise"
+                    className="block text-center py-3 rounded-lg font-semibold text-sm border-2 border-gray-200 text-gray-700 hover:border-[#C41E3A] hover:text-[#C41E3A] transition-all duration-150">
+                    {t('pricing.contact')}
+                  </a>
+                ) : (
+                  <Link href="/app/sign-in?mode=up"
+                    className="block text-center py-3 rounded-lg font-semibold text-sm border-2 border-gray-200 text-gray-700 hover:border-[#C41E3A] hover:text-[#C41E3A] transition-all duration-150">
+                    {t('pricing.cta')}
+                  </Link>
+                )}
               </div>
             ))}
           </div>
@@ -347,44 +311,29 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-950 text-gray-400 py-16">
         <div className="container">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
             <div>
               <div className="text-2xl font-bold text-white mb-3">Eqence</div>
-              <p className="text-sm leading-relaxed">AI-powered reputation management for Shopify merchants. Protect and grow your online presence.</p>
+              <p className="text-sm leading-relaxed">{t('hero.subtitle')}</p>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-white mb-3">{t('footer.product')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-3">{t('footer.company')}</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">{t('nav.features')}</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">{t('howit.title')}</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">{t('nav.pricing')}</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-white mb-3">{t('footer.support')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
+                <li><Link href="/app/sign-in" className="hover:text-white transition-colors">{t('nav.login')}</Link></li>
+                <li><a href="mailto:reply@smarthinkerz.com" className="hover:text-white transition-colors">reply@smarthinkerz.com</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm">&copy; 2026 Eqence. All rights reserved.</p>
-            <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            </div>
+          <div className="border-t border-gray-800 pt-8">
+            <p className="text-sm">&copy; 2026 Eqence, a SmarThinkerz product.</p>
           </div>
         </div>
       </footer>
