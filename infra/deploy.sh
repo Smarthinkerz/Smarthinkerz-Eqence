@@ -23,7 +23,11 @@ pnpm --filter @eqence/api migrate:build >/dev/null
 pnpm --filter @eqence/worker build >/dev/null
 
 id eqence >/dev/null 2>&1 || useradd --system --home /var/lib/eqence --shell /usr/sbin/nologin eqence
-install -d -o eqence -g eqence -m 750 /var/lib/eqence /var/lib/eqence/files
+# nginx (www-data) serves /var/lib/eqence/files at /files/: it may pass through the parent
+# (711, no listing) and read files/ (755). vault/ (merchant tokens) stays 700 eqence-only.
+install -d -o eqence -g eqence -m 711 /var/lib/eqence
+install -d -o eqence -g eqence -m 755 /var/lib/eqence/files /var/lib/eqence/files/blog
+install -d -o eqence -g eqence -m 700 /var/lib/eqence/vault
 REL=/opt/eqence/releases/\$(date -u +%Y%m%dT%H%M%SZ)-\$REV
 install -d \$REL/api \$REL/worker \$REL/migrations
 cp apps/api/dist/index.mjs apps/api/dist/migrate.mjs \$REL/api/
