@@ -1,6 +1,7 @@
 // Public site footer, shared by the home page and the blog.
 import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
+import AdminLoginDialog from './AdminLoginDialog';
 
 export default function SiteFooter() {
   const { t } = useI18n();
@@ -30,7 +31,10 @@ export default function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-gray-800 pt-8">
-        <p className="text-sm">&copy; 2026 Eqence, a SmarThinkerz product.</p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-sm">&copy; 2026 Eqence, a SmarThinkerz product.</p>
+          <AdminLoginDialog label={t('footer.admin')} className="text-sm text-gray-500 hover:text-white transition-colors" />
+        </div>
       </div>
     </div>
   </footer>
