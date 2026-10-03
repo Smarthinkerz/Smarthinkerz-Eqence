@@ -8,6 +8,9 @@ import ResetPassword from "./pages/app/ResetPassword";
 import Connections from "./pages/app/Connections";
 import BrandVoice from "./pages/app/BrandVoice";
 import Billing, { BillingReturn } from "./pages/app/Billing";
+import AdminContent from "./pages/app/AdminContent";
+import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
+import Blog, { BlogPost } from "./pages/Blog";
 import { captureRef } from "./lib/ref";
 
 // Keep a trainee referral code (?ref=CODE) for the Hub checkout.
@@ -30,6 +33,12 @@ function Router() {
       <Route path="/app/brand-voice" component={BrandVoice} />
       <Route path="/app/billing" component={Billing} />
       <Route path="/app/billing/return" component={BillingReturn} />
+      <Route path="/app/admin" component={AdminContent} />
+      <Route path="/app/admin/content" component={AdminContent} />
+      <Route path="/app/admin/blog" component={AdminBlog} />
+      <Route path="/app/admin/blog/:id" component={AdminBlogEdit} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPost} />
       {Object.entries(retiredPaths).map(([path, to]) => (
         <Route key={path} path={path}>
           <Redirect to={to} replace />

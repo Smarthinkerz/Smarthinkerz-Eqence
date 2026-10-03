@@ -35,9 +35,9 @@ export default function AppShell({ children }: { children: (me: Me) => ReactNode
           <div className="flex items-center gap-6 min-w-0">
             <Link href="/app" className="text-xl font-bold text-[#C41E3A]">Eqence</Link>
             <nav className="flex gap-1 overflow-x-auto">
-              {nav.map((n) => (
+              {[...nav, ...(me.user.role === 'admin' || me.user.isSuperUser ? [{ href: '/app/admin/content', label: 'Admin' }] : [])].map((n) => (
                 <Link key={n.href} href={n.href}
-                  className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap ${location === n.href ? 'bg-red-50 text-[#C41E3A] font-semibold' : 'text-gray-600 hover:text-gray-900'}`}>
+                  className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap ${location === n.href || (n.label === 'Admin' && location.startsWith('/app/admin')) ? 'bg-red-50 text-[#C41E3A] font-semibold' : 'text-gray-600 hover:text-gray-900'}`}>
                   {n.label}
                 </Link>
               ))}

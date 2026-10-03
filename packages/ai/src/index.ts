@@ -142,3 +142,49 @@ export async function draftReply(cfg: AiConfig, i: InteractionForAI, v: BrandVoi
   if (banned) throw new Error(`draft used a banned phrase: ${banned}`);
   return { reply, language: String(obj.language ?? '').toLowerCase().split(/[-_]/)[0] || 'und', usage };
 }
+
+/* ───────────── Blog writing assistant (admin only) ───────────── */
+
+export type BlogAiAction = 'titles' | 'outline' | 'full_post' | 'excerpt' | 'seo' | 'translate_ar' | 'translate_en' | 'improve';
+
+const BLOG_SYSTEM = `You write for the Eqence blog. Eqence helps Shopify stores in the Gulf and beyond manage their product reviews: it imports Judge.me reviews, analyses sentiment in Arabic and English, alerts on negative reviews, and drafts replies that the merchant approves before posting.
+Write clear, practical, accurate content for store owners. Never invent statistics, customer names, case studies or product features. Use Markdown: ## for section headings, - for lists, **bold** sparingly. No HTML.`;
+
+const BLOG_PROMPTS: Record<BlogAiAction, (topic: string, text: string) => string> = {
+  titles: (t) => `Suggest 8 blog post titles about: ${t}\nReturn a numbered list, one title per line, nothing else.`,
+  outline: (t) => `Write a blog post outline about: ${t}\nGive a title line, then 4-6 sections as ## headings, each with 2-3 bullet points. Nothing else.`,
+  full_post: (t, x) => `Write a complete blog post about: ${t}\n${x ? `Follow this outline or notes:\n${x}\n` : ''}About 600-800 words: a short introduction, 3-4 sections with ## headings, and a short conclusion. Output only the post body in Markdown, without the title.`,
+  excerpt: (t, x) => `Write a 2-sentence excerpt for a blog post titled "${t}" that makes a store owner want to read it.${x ? `\nPost:\n${x.slice(0, 6000)}` : ''}\nOutput only the excerpt.`,
+  seo: (t, x) => `Write an SEO meta title (under 60 characters) and meta description (under 155 characters) for a blog post titled "${t}".${x ? `\nPost:\n${x.slice(0, 6000)}` : ''}\nReturn exactly two lines:\nMETA TITLE: ...\nMETA DESCRIPTION: ...`,
+  translate_ar: (_t, x) => `Translate this into Arabic that reads naturally to Gulf store owners (clear Modern Standard Arabic, not a word-for-word translation). Keep the Markdown structure exactly. Output only the translation.\n\n${x}`,
+  translate_en: (_t, x) => `Translate this into natural English. Keep the Markdown structure exactly. Output only the translation.\n\n${x}`,
+  improve: (_t, x) => `Improve this blog text: fix grammar, tighten wording and improve clarity without changing its meaning, facts or Markdown structure. Output only the improved text.\n\n${x}`,
+};
+
+export async function blogAssist(cfg: AiConfig, action: BlogAiAction, topic: string, text: string): Promise<{ text: string; usage: Usage }> {
+  const build = BLOG_PROMPTS[action];
+  if (!build) throw new Error(`unknown blog action "${action}"`);
+  if ((action === 'translate_ar' || action === 'translate_en' || action === 'improve') && !text.trim()) throw new Error('this action needs text to work on');
+  if (!['translate_ar', 'translate_en', 'improve'].includes(action) && !topic.trim()) throw new Error('this action needs a topic or title');
+  const f = cfg.fetchImpl ?? fetch;
+  // Plain text output (not JSON), so the OpenAI path must not force json_object.
+  const model = cfg.draftModel;
+  if (cfg.provider === 'anthropic') {
+    const res = await f('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': cfg.apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model, max_tokens: 3000, system: BLOG_SYSTEM, messages: [{ role: 'user', content: build(topic, text) }] }),
+    });
+    if (!res.ok) throw new Error(`Anthropic returned ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const j = (await res.json()) as { content: Array<{ type: string; text?: string }>; usage: { input_tokens: number; output_tokens: number } };
+    return { text: j.content.filter((c) => c.type === 'text').map((c) => c.text).join('').trim(), usage: { model, tokensIn: j.usage.input_tokens, tokensOut: j.usage.output_tokens } };
+  }
+  const res = await f('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${cfg.apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, max_tokens: 3000, messages: [{ role: 'system', content: BLOG_SYSTEM }, { role: 'user', content: build(topic, text) }] }),
+  });
+  if (!res.ok) throw new Error(`OpenAI returned ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const j = (await res.json()) as { choices: Array<{ message: { content: string } }>; usage: { prompt_tokens: number; completion_tokens: number } };
+  return { text: (j.choices[0]?.message.content ?? '').trim(), usage: { model, tokensIn: j.usage.prompt_tokens, tokensOut: j.usage.completion_tokens } };
+}

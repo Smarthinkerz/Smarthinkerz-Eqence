@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { API_URL } from '../lib/api';
 
 type Language = string;
 
@@ -7,13 +8,25 @@ interface I18nContextType {
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
   isLoading: boolean;
+  /** Re-reads the admin's content overrides (after saving in the editor). */
+  reloadContent: () => void;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-// Hand-crafted translations for EN, JA, AR
-const translations: Record<string, Record<string, string>> = {
+// Hand-crafted translations for EN, JA, AR. These are the defaults; text saved in the
+// admin content editor (GET /api/content) overrides them key by key.
+export const translations: Record<string, Record<string, string>> = {
   en: {
+    'nav.blog': 'Blog',
+    'blog.hero.title': 'Blog',
+    'blog.hero.subtitle': 'Guides and news on managing reviews for Shopify stores, in Arabic and English.',
+    'blog.section.title': 'Latest posts',
+    'blog.section.subtitle': 'Practical advice on reviews, replies and customer trust.',
+    'blog.readmore': 'Read more',
+    'blog.back': 'Back to the blog',
+    'blog.empty': 'No posts yet. Check back soon.',
+    'blog.notfound': 'This post does not exist or is no longer published.',
     'pricing.unlimited': 'Unlimited',
     'pricing.f.included': 'Review import, sentiment analysis and alerts',
     'pricing.f.source': 'connected source',
@@ -118,6 +131,15 @@ const translations: Record<string, Record<string, string>> = {
     'payment.subtitle': 'Secure payment powered by Tap Payments',
   },
   ja: {
+    'nav.blog': 'ブログ',
+    'blog.hero.title': 'ブログ',
+    'blog.hero.subtitle': 'Shopify ストアのレビュー管理に関するガイドとお知らせ。',
+    'blog.section.title': '最新の記事',
+    'blog.section.subtitle': 'レビュー、返信、顧客の信頼に関する実践的なヒント。',
+    'blog.readmore': '続きを読む',
+    'blog.back': 'ブログに戻る',
+    'blog.empty': 'まだ記事はありません。',
+    'blog.notfound': 'この記事は存在しないか、公開されていません。',
     'pricing.unlimited': '無制限',
     'pricing.f.included': 'レビュー取り込み・感情分析・通知',
     'pricing.f.source': '件の接続ソース',
@@ -207,6 +229,15 @@ const translations: Record<string, Record<string, string>> = {
     'payment.subtitle': 'Tap Paymentsによる安全な決済',
   },
   ar: {
+    'nav.blog': 'المدونة',
+    'blog.hero.title': 'المدونة',
+    'blog.hero.subtitle': 'أدلة وأخبار حول إدارة التقييمات لمتاجر Shopify، بالعربية والإنجليزية.',
+    'blog.section.title': 'أحدث المقالات',
+    'blog.section.subtitle': 'نصائح عملية حول التقييمات والردود وثقة العملاء.',
+    'blog.readmore': 'اقرأ المزيد',
+    'blog.back': 'العودة إلى المدونة',
+    'blog.empty': 'لا توجد مقالات بعد. عد قريبًا.',
+    'blog.notfound': 'هذه المقالة غير موجودة أو لم تعد منشورة.',
     'howit.step3.desc': 'جهّز ردًا بالذكاء الاصطناعي، عدّله إن أردت، ثم وافق. يُنشر كردّ متجرك على Judge.me.',
     'howit.step3': 'وافق وانشر',
     'howit.step2.desc': 'يحصل كل تقييم على تصنيف للمشاعر، والتقييمات السلبية تُرسل لك تنبيهًا بالبريد.',
@@ -292,6 +323,21 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   });
   const [autoTranslations, setAutoTranslations] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
+
+  const reloadContent = useCallback(() => {
+    fetch(`${API_URL}/api/content`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j?.overrides) setOverrides(j.overrides); })
+      .catch(() => { /* the built-in text stays */ });
+  }, []);
+  useEffect(() => { reloadContent(); }, [reloadContent]);
+
+  // Arabic pages read right to left.
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
 
   // IP-based language detection on first visit
   useEffect(() => {
@@ -339,7 +385,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const t = useCallback((key: string): string => {
-    // Check hand-crafted translations first
+    // Admin-edited text wins, then the hand-crafted translations
+    if (overrides[language]?.[key]) return overrides[language][key];
     if (translations[language]?.[key]) {
       return translations[language][key];
     }
@@ -348,11 +395,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       return autoTranslations[key];
     }
     // Fallback to English
-    return translations.en[key] || key;
-  }, [language, autoTranslations]);
+    return overrides.en?.[key] || translations.en[key] || key;
+  }, [language, autoTranslations, overrides]);
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t, isLoading }}>
+    <I18nContext.Provider value={{ language, setLanguage, t, isLoading, reloadContent }}>
       {children}
     </I18nContext.Provider>
   );

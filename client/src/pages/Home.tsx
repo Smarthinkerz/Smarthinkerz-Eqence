@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
-import { LanguageToggle } from '../components/LanguageToggle';
+import SiteFooter from '../components/SiteFooter';
+import SiteNav from '../components/SiteNav';
 
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
@@ -103,28 +104,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
-        <div className="container flex items-center justify-between h-16">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="text-2xl font-bold text-[#C41E3A]">Eqence</Link>
-            <div className="hidden md:flex items-center gap-6">
-              <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">{t('nav.features')}</a>
-              <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">{t('nav.pricing')}</a>
-              <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">How It Works</a>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <LanguageToggle />
-            <Link href="/app/sign-in" className="text-sm font-medium text-gray-700 hover:text-gray-900 px-2 py-2 transition-colors">
-              {t('nav.login')}
-            </Link>
-            <Link href="/app/sign-in?mode=up" className="btn-primary text-sm px-4 py-2">
-              {t('nav.register')}
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Silent hero product motion supplied by the user, with foreground content retained above it. */}
       <section
@@ -309,34 +289,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-950 text-gray-400 py-16">
-        <div className="container">
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div>
-              <div className="text-2xl font-bold text-white mb-3">Eqence</div>
-              <p className="text-sm leading-relaxed">{t('hero.subtitle')}</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-3">{t('footer.product')}</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">{t('nav.features')}</a></li>
-                <li><a href="#how-it-works" className="hover:text-white transition-colors">{t('howit.title')}</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">{t('nav.pricing')}</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-3">{t('footer.support')}</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/app/sign-in" className="hover:text-white transition-colors">{t('nav.login')}</Link></li>
-                <li><a href="mailto:reply@smarthinkerz.com" className="hover:text-white transition-colors">reply@smarthinkerz.com</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8">
-            <p className="text-sm">&copy; 2026 Eqence, a SmarThinkerz product.</p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

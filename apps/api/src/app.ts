@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { auth, type AuthSession } from './auth';
 import { db } from './db';
 import { env } from './env';
+import { mountCms } from './cms';
 import { mountRoutes } from './routes';
 
 type Vars = { session: AuthSession['session']; user: AuthSession['user'] };
@@ -17,7 +18,7 @@ app.use('/api/*', cors({
   origin: (origin) => (env.webOrigins.includes(origin) ? origin : null),
   credentials: true,
   allowHeaders: ['Content-Type'],
-  allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   maxAge: 600,
 }));
 
@@ -54,6 +55,7 @@ app.get('/api/v1/me', async (c) => {
 });
 
 mountRoutes(app);
+mountCms(app);
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 app.onError((err, c) => {

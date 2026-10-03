@@ -231,3 +231,39 @@ export const auditLog = pgTable('audit_log', {
   detail: jsonb('detail'),
   createdAt: createdAt(),
 }, (t) => [index('audit_log_tenant_created_idx').on(t.tenantId, t.createdAt)]);
+
+/* ───────────── Site content and blog (admin CMS) ───────────── */
+
+// Front-page text overrides: one row per (key, language). Keys are the site's i18n keys,
+// so an override replaces exactly the string the page would otherwise show.
+export const siteContent = pgTable('site_content', {
+  key: text('key').notNull(),
+  lang: text('lang').notNull(),          // 'en' | 'ar' | 'ja'
+  value: text('value').notNull(),
+  updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+  updatedAt: updatedAt(),
+}, (t) => [uniqueIndex('site_content_key_lang_idx').on(t.key, t.lang)]);
+
+export const blogStatus = pgEnum('blog_status', ['draft', 'published']);
+
+// Bodies are Markdown, rendered without raw HTML. Arabic fields are optional; the
+// English text is shown when an Arabic version is missing.
+export const blogPosts = pgTable('blog_posts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: text('slug').notNull().unique(),
+  status: blogStatus('status').notNull().default('draft'),
+  titleEn: text('title_en').notNull(),
+  titleAr: text('title_ar'),
+  excerptEn: text('excerpt_en'),
+  excerptAr: text('excerpt_ar'),
+  bodyEn: text('body_en').notNull().default(''),
+  bodyAr: text('body_ar'),
+  coverUrl: text('cover_url'),
+  metaTitle: text('meta_title'),
+  metaDescription: text('meta_description'),
+  authorName: text('author_name'),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (t) => [index('blog_posts_status_published_idx').on(t.status, t.publishedAt)]);
