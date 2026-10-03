@@ -14,11 +14,11 @@ export interface AdminPost {
   publishedAt: string | null; updatedAt: string;
 }
 
-export function AdminTabs({ active }: { active: 'content' | 'blog' }) {
+export function AdminTabs({ active }: { active: 'dashboard' | 'content' | 'blog' }) {
   const tab = (key: string, href: string, label: string) => (
     <Link href={href} className={`px-3 py-1.5 rounded-md text-sm ${active === key ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>{label}</Link>
   );
-  return <div className="flex gap-2">{tab('content', '/app/admin/content', 'Front page')}{tab('blog', '/app/admin/blog', 'Blog')}</div>;
+  return <div className="flex flex-wrap gap-2">{tab('dashboard', '/app/admin', 'Dashboard')}{tab('content', '/app/admin/content', 'Front page')}{tab('blog', '/app/admin/blog', 'Blog')}</div>;
 }
 
 export default function AdminBlog() {

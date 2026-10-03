@@ -77,6 +77,30 @@ export function mountCms(app: Hono<any>) {
   /* ── admin (session required by the /api/v1 middleware, then admin role) ── */
   app.use('/api/v1/admin/*', requireAdmin);
 
+  // Admin dashboard: counts only, no personal data.
+  app.get('/api/v1/admin/overview', async (c) => {
+    const one = async (q: ReturnType<typeof sql>) => Number((await db.execute(q)).rows[0]?.n ?? 0);
+    const [published, drafts, overrides, users, verified, activePlans, connections, reviews, published7] = await Promise.all([
+      one(sql`select count(*) as n from blog_posts where status = 'published'`),
+      one(sql`select count(*) as n from blog_posts where status = 'draft'`),
+      one(sql`select count(*) as n from site_content`),
+      one(sql`select count(*) as n from "user"`),
+      one(sql`select count(*) as n from "user" where email_verified`),
+      one(sql`select count(*) as n from tenants where plan_status = 'active' and (plan_expires_at is null or plan_expires_at > now())`),
+      one(sql`select count(*) as n from connections where status = 'active'`),
+      one(sql`select count(*) as n from interactions`),
+      one(sql`select count(*) as n from responses where status = 'published' and published_at > now() - interval '7 days'`),
+    ]);
+    const [latest] = await db.select({ slug: blogPosts.slug, titleEn: blogPosts.titleEn, status: blogPosts.status, updatedAt: blogPosts.updatedAt })
+      .from(blogPosts).orderBy(desc(blogPosts.updatedAt)).limit(1);
+    return c.json({
+      blog: { published, drafts, latest: latest ?? null },
+      content: { overrides },
+      accounts: { users, verified, activePlans },
+      reviews: { connections, reviews, repliesPosted7d: published7 },
+    });
+  });
+
   app.get('/api/v1/admin/content', async (c) => {
     const rows = await db.select().from(siteContent);
     return c.json({ rows: rows.map((r) => ({ key: r.key, lang: r.lang, value: r.value, updatedAt: r.updatedAt })) });

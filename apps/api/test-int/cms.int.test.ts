@@ -122,3 +122,15 @@ test('media: PNG accepted and stored; SVG, HTML and fake extensions refused', as
   const fd = new FormData(); fd.append('file', new File([png], 'cover.png', { type: 'image/png' }));
   assert.equal((await app.request('/api/v1/admin/media', { method: 'POST', headers: { cookie: cookies.merchant, Origin: ORIGIN }, body: fd })).status, 403);
 });
+
+test('admin overview: counts for admins, 403 for others, no personal data', async () => {
+  assert.equal((await call('merchant', 'GET', '/api/v1/admin/overview')).status, 403);
+  const r = await call('admin', 'GET', '/api/v1/admin/overview');
+  assert.equal(r.status, 200);
+  const o = await r.json() as Record<string, Record<string, unknown>>;
+  for (const [group, keys] of Object.entries({ blog: ['published', 'drafts'], content: ['overrides'], accounts: ['users', 'verified', 'activePlans'], reviews: ['connections', 'reviews', 'repliesPosted7d'] })) {
+    for (const k of keys) assert.equal(typeof o[group][k], 'number', `${group}.${k}`);
+  }
+  assert.ok((o.accounts.users as number) >= 2, 'counts the two test accounts');
+  assert.ok(!JSON.stringify(o).includes('@'), 'no email addresses in the overview');
+});

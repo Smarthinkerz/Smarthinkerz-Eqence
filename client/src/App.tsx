@@ -9,6 +9,7 @@ import Connections from "./pages/app/Connections";
 import BrandVoice from "./pages/app/BrandVoice";
 import Billing, { BillingReturn } from "./pages/app/Billing";
 import AdminContent from "./pages/app/AdminContent";
+import AdminDashboard from "./pages/app/AdminDashboard";
 import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
 import Blog, { BlogPost } from "./pages/Blog";
 import { captureRef } from "./lib/ref";
@@ -33,7 +34,7 @@ function Router() {
       <Route path="/app/brand-voice" component={BrandVoice} />
       <Route path="/app/billing" component={Billing} />
       <Route path="/app/billing/return" component={BillingReturn} />
-      <Route path="/app/admin" component={AdminContent} />
+      <Route path="/app/admin" component={AdminDashboard} />
       <Route path="/app/admin/content" component={AdminContent} />
       <Route path="/app/admin/blog" component={AdminBlog} />
       <Route path="/app/admin/blog/:id" component={AdminBlogEdit} />

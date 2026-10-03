@@ -25,7 +25,7 @@ export default function AdminLoginDialog({ className, label }: { className?: str
       if (me.user.role === 'admin' || me.user.isSuperUser) {
         setOpen(false);
         setPassword('');
-        navigate('/app/admin/content');
+        navigate('/app/admin');
         return;
       }
       await auth.signOut().catch(() => {});

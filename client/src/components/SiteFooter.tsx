@@ -26,6 +26,7 @@ export default function SiteFooter() {
           <h4 className="text-sm font-semibold text-white mb-3">{t('footer.support')}</h4>
           <ul className="space-y-2 text-sm">
             <li><Link href="/app/sign-in" className="hover:text-white transition-colors">{t('nav.login')}</Link></li>
+            <li><AdminLoginDialog label={t('footer.admin')} className="hover:text-white transition-colors" /></li>
             <li><a href="mailto:reply@smarthinkerz.com" className="hover:text-white transition-colors">reply@smarthinkerz.com</a></li>
           </ul>
         </div>
@@ -33,7 +34,6 @@ export default function SiteFooter() {
       <div className="border-t border-gray-800 pt-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-sm">&copy; 2026 Eqence, a SmarThinkerz product.</p>
-          <AdminLoginDialog label={t('footer.admin')} className="text-sm text-gray-500 hover:text-white transition-colors" />
         </div>
       </div>
     </div>
