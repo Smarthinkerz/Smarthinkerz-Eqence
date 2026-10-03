@@ -29,10 +29,16 @@ function Cover({ url, title }: { url: string | null; title: string }) {
   );
 }
 
-function Banner({ title, subtitle }: { title: string; subtitle?: string }) {
+// Only images uploaded to Eqence's own file store are used as a banner background.
+const OWN_IMAGE = /^https:\/\/api\.eqence\.com\/files\/[A-Za-z0-9/_.-]+\.(png|jpe?g|webp)$/;
+
+function Banner({ title, subtitle, image }: { title: string; subtitle?: string; image?: string }) {
+  const bg = image && OWN_IMAGE.test(image) ? image : null;
   return (
-    <section className="relative mt-16 bg-gradient-to-br from-slate-900 via-slate-800 to-[#5a0f1c] text-white">
-      <div className="container py-16 sm:py-24 text-center">
+    <section className="relative mt-16 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-[#5a0f1c] text-white">
+      {bg && <img src={bg} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />}
+      {bg && <div className="absolute inset-0 bg-slate-950/55" />}
+      <div className="container relative py-16 sm:py-24 text-center">
         <h1 className="text-4xl sm:text-5xl font-black" dir="auto">{title}</h1>
         {subtitle && <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-200" dir="auto">{subtitle}</p>}
       </div>
@@ -53,7 +59,7 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-white">
       <SiteNav />
-      <Banner title={t('blog.hero.title')} subtitle={t('blog.hero.subtitle')} />
+      <Banner title={t('blog.hero.title')} subtitle={t('blog.hero.subtitle')} image={t('blog.hero.image')} />
       <section className="section-padding">
         <div className="container">
           <div className="text-center max-w-2xl mx-auto mb-12">

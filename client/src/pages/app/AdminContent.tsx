@@ -2,7 +2,7 @@
 // overrides it on the live site for that language. Clearing a field restores the default.
 import { useEffect, useMemo, useState } from 'react';
 import { translations, useI18n } from '../../contexts/I18nContext';
-import { api } from '../../lib/api';
+import { api, API_URL } from '../../lib/api';
 import AppShell from './AppShell';
 import { AdminTabs } from './AdminBlog';
 
@@ -15,7 +15,7 @@ const GROUPS: { title: string; page: string; keys: string[] }[] = [
   },
   { title: 'How it works', page: '/#how-it-works', keys: ['howit.title', 'howit.subtitle', 'howit.step1', 'howit.step1.desc', 'howit.step2', 'howit.step2.desc', 'howit.step3', 'howit.step3.desc'] },
   { title: 'Pricing', page: '/#pricing', keys: ['pricing.title', 'pricing.subtitle', 'pricing.cta', 'pricing.contact', 'pricing.f.replies', 'pricing.f.included'] },
-  { title: 'Blog page', page: '/blog', keys: ['blog.hero.title', 'blog.hero.subtitle', 'blog.section.title', 'blog.section.subtitle', 'blog.readmore', 'blog.back', 'blog.empty'] },
+  { title: 'Blog page', page: '/blog', keys: ['blog.hero.image', 'blog.hero.title', 'blog.hero.subtitle', 'blog.section.title', 'blog.section.subtitle', 'blog.readmore', 'blog.back', 'blog.empty'] },
 ];
 const LANGS = [{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ja', label: '日本語' }];
 
@@ -93,6 +93,20 @@ function Body() {
                     {...(long ? { rows: 2 } : {})}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft({ ...draft, [id]: e.target.value })}
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#C41E3A] outline-none placeholder:text-gray-400" />
+                  {k.endsWith('.image') && (
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      {v && <img src={v} alt="" className="h-16 w-28 rounded object-cover" />}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="text-xs" onChange={async (e) => {
+                        const f = e.target.files?.[0]; e.target.value = '';
+                        if (!f) return;
+                        const fd = new FormData(); fd.append('file', f);
+                        const res = await fetch(`${API_URL}/api/v1/admin/media`, { method: 'POST', credentials: 'include', body: fd });
+                        const j = await res.json().catch(() => ({}));
+                        if (res.ok) setDraft((d) => ({ ...d, [id]: j.url })); else setMsg({ ok: false, text: j.error || 'Upload failed' });
+                      }} />
+                      <span className="text-xs text-gray-500">Banner photo, PNG/JPEG/WebP up to 4 MB, wide (e.g. 1920×600).</span>
+                    </div>
+                  )}
                   {saved[id] && <button className="mt-1 text-xs text-gray-500 hover:text-gray-800" onClick={() => setDraft({ ...draft, [id]: '' })}>Reset to default</button>}
                 </div>
               );
