@@ -4,10 +4,10 @@
 // Run on csb-fra with DATABASE_URL=<eqence_dev>, PRICING_LADDER=site, HUB_PARTNER_SECRET=<any test value>.
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
-import { after, before, test } from 'node:test';
+import { after, before, mock, test } from 'node:test';
 import { quotaFor } from '@eqence/core';
 import { auditLog, hubEvents, tenants, user } from '@eqence/db';
-import { eq, like } from 'drizzle-orm';
+import { and, eq, like } from 'drizzle-orm';
 
 process.env.BETTER_AUTH_SECRET ||= 'test-only-secret-not-used-for-anything-real';
 const SECRET = process.env.HUB_PARTNER_SECRET!;
@@ -24,7 +24,8 @@ let order = 1000 + Math.floor(Math.random() * 1e6);
 
 function payload(event: string, extra: Record<string, unknown> = {}) {
   const id = ++order;
-  const internal = event === 'payment.success' ? 'order.paid' : event === 'payment.failed' ? 'order.failed' : 'order.refunded';
+  const internal = event === 'payment.success' ? 'order.paid' : event === 'payment.failed' ? 'order.failed'
+    : event === 'order.partially_refunded' ? 'order.partially_refunded' : 'order.refunded';
   const eventId = `sh_${internal.replace(/\./g, '_')}_${id}_${uid.slice(-8)}`;
   return {
     event, event_id: eventId, id: eventId, email, customer_email: email, name: 'Hub Test', plan: 'eqence-starter', plan_slug: 'eqence-starter',
@@ -38,11 +39,11 @@ function payload(event: string, extra: Record<string, unknown> = {}) {
 
 const sign = (body: string, secret = SECRET) => 'sha256=' + createHmac('sha256', secret).update(body).digest('hex');
 
-async function deliver(body: unknown, signature?: string) {
+async function deliver(body: unknown, signature?: string, headers: Record<string, string> = {}) {
   const raw = typeof body === 'string' ? body : JSON.stringify(body);
   const res = await app.request('/api/hub/webhook', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-SmarThinkerz-Signature': signature ?? sign(raw) },
+    headers: { 'Content-Type': 'application/json', 'X-SmarThinkerz-Signature': signature ?? sign(raw), ...headers },
     body: raw,
   });
   return { status: res.status, body: await res.json() as { outcome?: string; error?: string } };
@@ -139,6 +140,41 @@ test('yearly cycle grants a year', async () => {
   assert.equal(t.plan, 'eqence-basic');
   const days = (t.planExpiresAt!.getTime() - Date.now()) / 86_400_000;
   assert.ok(days > 360 && days < 370, `~1 year, got ${days.toFixed(1)}`);
+});
+
+test('order.partially_refunded is recorded but never revokes the plan', async () => {
+  const before = await tenant();
+  assert.equal(before.planStatus, 'active', 'precondition: an active plan');
+  const p = payload('order.partially_refunded', { status: 'partially_refunded', refunded_amount: 10 });
+  const r = await deliver(p, undefined, { 'X-SmarThinkerz-Event': 'order.partially_refunded' });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.outcome, 'recorded:partially_refunded');
+  const after = await tenant();
+  assert.equal(after.planStatus, 'active');
+  assert.equal(after.plan, before.plan);
+  assert.equal(after.planExpiresAt!.getTime(), before.planExpiresAt!.getTime());
+  const rows = await db.select().from(auditLog).where(and(eq(auditLog.tenantId, tenantId), eq(auditLog.action, 'billing.partially_refunded')));
+  assert.equal(rows.length, 1);
+  assert.deepEqual(rows[0].detail, { order_id: p.order_id, refunded_amount: 10 });
+  assert.ok((await quotaFor(db, tenantId)).limit > 0, 'still entitled to AI replies');
+});
+
+test('every delivery logs X-SmarThinkerz-Event, Delivery-Id and Attempt, accepted or rejected', async () => {
+  const lines: string[] = [];
+  const spy = mock.method(console, 'log', (...args: unknown[]) => { lines.push(args.map(String).join(' ')); });
+  try {
+    await deliver(payload('payment.failed'), undefined, { 'X-SmarThinkerz-Event': 'payment.failed', 'X-SmarThinkerz-Delivery-Id': '9001', 'X-SmarThinkerz-Attempt': '2' });
+    const bad = JSON.stringify(payload('payment.success'));
+    await deliver(bad, sign(bad, 'wrong'), { 'X-SmarThinkerz-Event': 'payment.success', 'X-SmarThinkerz-Delivery-Id': '9002', 'X-SmarThinkerz-Attempt': '1' });
+    await deliver('not json', sign('not json'), { 'X-SmarThinkerz-Delivery-Id': '9003', 'X-SmarThinkerz-Attempt': '3' });
+  } finally { spy.mock.restore(); }
+  const logs = lines.filter((l) => l.includes('"msg":"hub.webhook"')).map((l) => JSON.parse(l));
+  const by = (id: string) => logs.find((l) => l.deliveryId === id)!;
+  assert.deepEqual([by('9001').status, by('9001').outcome, by('9001').hubEvent, by('9001').attempt], [200, 'recorded:payment_failed', 'payment.failed', '2']);
+  assert.ok(String(by('9001').eventId).startsWith('sh_order_failed_'));
+  assert.deepEqual([by('9002').status, by('9002').outcome, by('9002').hubEvent, by('9002').attempt], [401, 'invalid_signature', 'payment.success', '1']);
+  assert.deepEqual([by('9003').status, by('9003').outcome, by('9003').hubEvent, by('9003').attempt], [400, 'invalid_json', null, '3']);
+  assert.ok(!lines.some((l) => l.includes(SECRET)), 'the secret is never logged');
 });
 
 test('subscription.cancelled (the Hub\'s refund event) revokes the plan', async () => {

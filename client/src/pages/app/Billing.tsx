@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearch } from 'wouter';
 import { api, type Me } from '../../lib/api';
+import { parseHubReturn } from '../../lib/hubReturn';
 import { storedRef } from '../../lib/ref';
 import AppShell from './AppShell';
 
@@ -110,7 +111,8 @@ export function BillingReturn() {
 }
 
 function ReturnBody() {
-  const status = new URLSearchParams(useSearch()).get('status');
+  const ret = parseHubReturn(useSearch());
+  const status = ret.status;
   const [state, setState] = useState<'waiting' | 'active' | 'timeout'>('waiting');
 
   useEffect(() => {
@@ -129,7 +131,7 @@ function ReturnBody() {
     <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-xl">
       {status !== 'paid' ? (
         <><h1 className="text-lg font-bold text-gray-900">Payment not completed</h1>
-          <p className="text-gray-700 mt-2">{status === 'cancelled' ? 'You cancelled the checkout.' : 'The payment did not go through.'} Nothing was charged to your plan.</p></>
+          <p className="text-gray-700 mt-2">{status === 'cancelled' ? 'You cancelled the checkout.' : 'The payment did not go through.'} Your plan has not changed.</p></>
       ) : state === 'active' ? (
         <><h1 className="text-lg font-bold text-gray-900">Your plan is active</h1>
           <p className="text-gray-700 mt-2">Thank you. You can now draft replies with AI.</p></>
@@ -140,6 +142,7 @@ function ReturnBody() {
         <><h1 className="text-lg font-bold text-gray-900">Confirming your payment…</h1>
           <p role="status" className="text-gray-700 mt-2">This takes a few seconds.</p></>
       )}
+      {ret.orderId && <p className="mt-3 text-xs text-gray-500">Order reference: {ret.orderId}{ret.tapId ? ` (${ret.tapId})` : ''}</p>}
       <div className="mt-5 flex gap-4 text-sm">
         <Link href="/app" className="text-[#C41E3A] hover:underline">Go to inbox</Link>
         <Link href="/app/billing" className="text-[#C41E3A] hover:underline">Billing</Link>

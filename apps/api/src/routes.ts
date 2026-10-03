@@ -168,13 +168,23 @@ export function mountRoutes(app: Hono<any>) {
 
   // Hub partner webhook. Fails closed: no secret configured means nothing is accepted.
   app.post('/api/hub/webhook', async (c) => {
+    // One log line per delivery, whatever the result, so a Hub delivery id can always be
+    // matched to what Eqence did with it. Header values are length-capped; no body is logged.
+    const h = (name: string) => (c.req.header(name) ?? '').slice(0, 100) || null;
+    const log = (status: number, outcome: string, eventId: string | null = null) => {
+      console.log(JSON.stringify({
+        msg: 'hub.webhook', status, outcome, eventId,
+        hubEvent: h('x-smarthinkerz-event'), deliveryId: h('x-smarthinkerz-delivery-id'), attempt: h('x-smarthinkerz-attempt'),
+      }));
+    };
     const secret = process.env.HUB_PARTNER_SECRET || '';
-    if (!secret) return c.json({ error: 'webhook receiver not configured' }, 503);
+    if (!secret) { log(503, 'not_configured'); return c.json({ error: 'webhook receiver not configured' }, 503); }
     const raw = Buffer.from(await c.req.arrayBuffer());
-    if (!verifyHubSignature(raw, c.req.header('x-smarthinkerz-signature'), secret)) return c.json({ error: 'invalid signature' }, 401);
+    if (!verifyHubSignature(raw, c.req.header('x-smarthinkerz-signature'), secret)) { log(401, 'invalid_signature'); return c.json({ error: 'invalid signature' }, 401); }
     let payload: HubPayload;
-    try { payload = JSON.parse(raw.toString('utf8')); } catch { return c.json({ error: 'invalid JSON' }, 400); }
+    try { payload = JSON.parse(raw.toString('utf8')); } catch { log(400, 'invalid_json'); return c.json({ error: 'invalid JSON' }, 400); }
     const result = await applyHubEvent(db, payload);
+    log(result.status, result.outcome, String(payload.event_id ?? payload.id ?? '').slice(0, 200) || null);
     return c.json({ outcome: result.outcome }, result.status);
   });
 

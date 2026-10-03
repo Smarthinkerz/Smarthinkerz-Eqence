@@ -4,7 +4,8 @@
 //  - flat JSON body; header X-SmarThinkerz-Signature: sha256=<hex HMAC-SHA256 of the exact body>
 //  - events: payment.success (order.paid), payment.failed (order.failed),
 //    subscription.cancelled (order.refunded, also re-sent when the Hub cancels after failed
-//    renewals), order.partially_refunded (passed through unchanged)
+//    renewals), order.partially_refunded (passed through unchanged). Only
+//    subscription.cancelled revokes a plan; a partial refund is recorded, nothing more.
 //  - event_id = sh_<internal event>_<order id>, stable across retries; no timestamp, so
 //    replay protection is the event_id dedupe
 //  - older Hub builds sent the signature header twice, folded as "sha256=a, sha256=a"
@@ -51,6 +52,7 @@ export interface HubPayload {
   app_id?: string | null; metadata?: { app_id?: string | null; user_id?: string | null };
   plan?: string; plan_slug?: string; cycle?: string | null; external_ref?: string | null;
   email?: string; customer_email?: string; order_id?: number | string; paid_at?: string | null;
+  refunded_amount?: number | null;
 }
 
 export type HubOutcome =
@@ -135,6 +137,11 @@ export async function applyHubEvent(db: Db, p: HubPayload): Promise<HubOutcome> 
     if (event === 'payment.failed') {
       await tx.insert(auditLog).values({ tenantId, action: 'billing.payment_failed', target: eventId, detail: { order_id: p.order_id } });
       return finish('recorded:payment_failed', tenantId);
+    }
+
+    if (event === 'order.partially_refunded') {
+      await tx.insert(auditLog).values({ tenantId, action: 'billing.partially_refunded', target: eventId, detail: { order_id: p.order_id, refunded_amount: p.refunded_amount ?? null } });
+      return finish('recorded:partially_refunded', tenantId);
     }
 
     return finish(`ignored:event=${event || 'none'}`, tenantId);
