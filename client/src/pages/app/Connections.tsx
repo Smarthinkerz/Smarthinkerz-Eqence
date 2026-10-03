@@ -36,8 +36,7 @@ function ConnectionsBody() {
       <section className="bg-white rounded-xl border border-gray-200 p-5">
         <h1 className="text-lg font-bold text-gray-900">Connect your Judge.me reviews</h1>
         <p className="text-sm text-gray-600 mt-1">
-          In Judge.me, open <b>Settings → Integrations</b> and find the <b>API</b> section. Copy your <b>private API token</b> and paste it here with your
-          store's domain. The token is stored encrypted and is only used to read your reviews and post the replies you approve.
+          In Judge.me (Shopify admin → Apps → Judge.me), open <b>Settings → Integrations</b> and click <b>View API tokens</b>. Copy the <b>Private API Token</b> (not the public one) and your <b>shop domain</b> (yourstore.myshopify.com) and paste them here. The token is stored encrypted and is only used to read your reviews and post the replies you approve.
         </p>
         {message && <div role={message.kind === 'err' ? 'alert' : 'status'}
           className={`mt-4 p-3 rounded-lg text-sm ${message.kind === 'err' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-800 border border-green-200'}`}>{message.text}</div>}
