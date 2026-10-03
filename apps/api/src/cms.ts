@@ -20,12 +20,16 @@ import { env } from './env';
 
 type U = { id: string; role?: string; isSuperUser?: boolean };
 
+// The signed-in user set by the /api/v1 session middleware. Typed loosely because route-level
+// middleware (bodyLimit) narrows Hono's context variables.
+const userOf = (c: unknown) => (c as Context).get('user') as U;
+
 export function isAdmin(u: U | undefined | null) {
   return !!u && (u.role === 'admin' || u.isSuperUser === true);
 }
 
 async function requireAdmin(c: Context, next: Next) {
-  if (!isAdmin(c.get('user') as U)) return c.json({ error: 'admin only' }, 403);
+  if (!isAdmin(userOf(c))) return c.json({ error: 'admin only' }, 403);
   // Cookies alone must not authorise a write: the request has to come from our web app.
   if (c.req.method !== 'GET' && !env.webOrigins.includes(c.req.header('origin') ?? '')) {
     return c.json({ error: 'cross-site request refused' }, 403);
@@ -88,7 +92,7 @@ export function mountCms(app: Hono<any>) {
       if (!validContentKey(k)) return c.json({ error: `invalid key ${k.slice(0, 80)}` }, 400);
       if (v !== null && (typeof v !== 'string' || v.length > CONTENT_MAX)) return c.json({ error: `value for ${k} must be text up to ${CONTENT_MAX} characters, or null` }, 400);
     }
-    const uid = (c.get('user') as U).id;
+    const uid = userOf(c).id;
     await db.transaction(async (tx) => {
       for (const [k, v] of entries) {
         if (v === null || (v as string).trim() === '') {
@@ -122,9 +126,9 @@ export function mountCms(app: Hono<any>) {
     const status = input.status ?? 'draft';
     const [p] = await db.insert(blogPosts).values({
       ...input, titleEn: input.titleEn!, bodyEn: input.bodyEn ?? '', slug, status,
-      publishedAt: status === 'published' ? new Date() : null, createdBy: (c.get('user') as U).id,
+      publishedAt: status === 'published' ? new Date() : null, createdBy: userOf(c).id,
     }).returning();
-    await db.insert(auditLog).values({ actorUserId: (c.get('user') as U).id, action: 'cms.blog_created', target: p.id, detail: { slug, status } });
+    await db.insert(auditLog).values({ actorUserId: userOf(c).id, action: 'cms.blog_created', target: p.id, detail: { slug, status } });
     return c.json({ post: p }, 201);
   });
 
@@ -140,14 +144,14 @@ export function mountCms(app: Hono<any>) {
     const publishedAt = input.status === 'published' && !cur.publishedAt ? new Date() : undefined;
     const [p] = await db.update(blogPosts).set({ ...input, ...(publishedAt ? { publishedAt } : {}), updatedAt: new Date() })
       .where(eq(blogPosts.id, id)).returning();
-    await db.insert(auditLog).values({ actorUserId: (c.get('user') as U).id, action: 'cms.blog_updated', target: id, detail: { fields: Object.keys(input), status: p.status } });
+    await db.insert(auditLog).values({ actorUserId: userOf(c).id, action: 'cms.blog_updated', target: id, detail: { fields: Object.keys(input), status: p.status } });
     return c.json({ post: p });
   });
 
   app.delete('/api/v1/admin/blog/:id', async (c) => {
     const [p] = await db.delete(blogPosts).where(eq(blogPosts.id, c.req.param('id'))).returning({ id: blogPosts.id, slug: blogPosts.slug });
     if (!p) return c.json({ error: 'not found' }, 404);
-    await db.insert(auditLog).values({ actorUserId: (c.get('user') as U).id, action: 'cms.blog_deleted', target: p.id, detail: { slug: p.slug } });
+    await db.insert(auditLog).values({ actorUserId: userOf(c).id, action: 'cms.blog_deleted', target: p.id, detail: { slug: p.slug } });
     return c.json({ deleted: true });
   });
 
@@ -164,7 +168,7 @@ export function mountCms(app: Hono<any>) {
     const dir = join(env.fileDir, 'blog');
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, name), buf, { mode: 0o644 });
-    await db.insert(auditLog).values({ actorUserId: (c.get('user') as U).id, action: 'cms.media_uploaded', target: name, detail: { bytes: buf.length, type: kind.mime } });
+    await db.insert(auditLog).values({ actorUserId: userOf(c).id, action: 'cms.media_uploaded', target: name, detail: { bytes: buf.length, type: kind.mime } });
     return c.json({ url: `${filesBase()}/blog/${name}` }, 201);
   });
 
@@ -176,7 +180,7 @@ export function mountCms(app: Hono<any>) {
     const text = String(b.text ?? '').slice(0, 30000);
     try {
       const out = await blogAssist(aiConfigFromEnv(), b.action as BlogAiAction, topic, text);
-      await db.insert(auditLog).values({ actorUserId: (c.get('user') as U).id, action: 'cms.blog_ai', detail: { action: b.action, model: out.usage.model, tokensIn: out.usage.tokensIn, tokensOut: out.usage.tokensOut } });
+      await db.insert(auditLog).values({ actorUserId: userOf(c).id, action: 'cms.blog_ai', detail: { action: b.action, model: out.usage.model, tokensIn: out.usage.tokensIn, tokensOut: out.usage.tokensOut } });
       return c.json({ text: out.text });
     } catch (e) {
       return c.json({ error: (e as Error).message.slice(0, 300) }, 400);
