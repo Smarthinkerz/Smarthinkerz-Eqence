@@ -21,13 +21,15 @@ const cookies: Record<string, string> = {};
 async function makeUser(name: string, role: 'admin' | 'user') {
   const id = `cmstest-${tag}-${name}`, email = `${id}@example.invalid`;
   const pw = `Pw-${randomBytes(10).toString('hex')}!`, salt = randomBytes(16).toString('hex');
-  // Admin access needs two-factor; these CMS tests start from an admin who has it set up.
-  await db.insert(user).values({ id, name, email, emailVerified: true, role, twoFactorEnabled: role === 'admin' });
+  await db.insert(user).values({ id, name, email, emailVerified: true, role });
   await db.insert(account).values({ id: randomUUID(), accountId: id, providerId: 'credential', userId: id, password: `c2c-scrypt$${salt}:${scryptSync(pw, salt, 64).toString('hex')}` });
   ids.push(id);
   const r = await app.request('/api/auth/sign-in/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: ORIGIN }, body: JSON.stringify({ email, password: pw }) });
   assert.equal(r.status, 200, `sign in ${name}`);
   cookies[name] = r.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+  // Admin access needs two-factor. The full setup flow is tested in admin2fa.int.test.ts;
+  // here the signed-in admin is marked as having completed it.
+  if (role === 'admin') await db.update(user).set({ twoFactorEnabled: true }).where(eq(user.id, id));
 }
 
 const call = (who: string | null, method: string, path: string, body?: unknown, origin: string | null = ORIGIN) =>
