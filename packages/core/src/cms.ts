@@ -7,6 +7,11 @@ export type ContentLang = (typeof CONTENT_LANGS)[number];
 // Only i18n-style keys can be overridden; values are plain text, rendered as text.
 export const CONTENT_KEY_RE = /^[a-z][a-z0-9_]*(\.[a-z0-9_]+){1,4}$/;
 export const CONTENT_MAX = 5000;
+// Legal pages (privacy policy, terms) are long documents.
+export const LEGAL_MAX = 60000;
+export function contentMax(key: string) {
+  return key.startsWith('legal.') ? LEGAL_MAX : CONTENT_MAX;
+}
 
 export function validContentKey(key: string) {
   return CONTENT_KEY_RE.test(key) && key.length <= 80;

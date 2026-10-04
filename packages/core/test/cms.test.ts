@@ -45,3 +45,10 @@ test('images identified by magic bytes, not by name or claimed type', () => {
   assert.equal(sniffImage(new TextEncoder().encode('<svg onload=alert(1)>')), null);
   assert.equal(sniffImage(new TextEncoder().encode('<html><script>')), null);
 });
+
+test('legal pages may be long; other content stays short', async () => {
+  const { contentMax } = await import('../src/cms');
+  assert.equal(contentMax('legal.privacy.body'), 60000);
+  assert.equal(contentMax('hero.title'), 5000);
+  assert.equal(validContentKey('legal.terms.body'), true);
+});

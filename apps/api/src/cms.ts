@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { aiConfigFromEnv } from '@eqence/core';
 import { blogAssist, type BlogAiAction } from '@eqence/ai';
 import {
-  cleanBlogInput, CONTENT_LANGS, CONTENT_MAX, MAX_IMAGE_BYTES, slugify, sniffImage, uniqueSlug, validContentKey,
+  cleanBlogInput, CONTENT_LANGS, contentMax, MAX_IMAGE_BYTES, slugify, sniffImage, uniqueSlug, validContentKey,
 } from '@eqence/core';
 import { auditLog, blogPosts, siteContent } from '@eqence/db';
 import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
@@ -114,7 +114,7 @@ export function mountCms(app: Hono<any>) {
     if (!entries.length || entries.length > 200) return c.json({ error: 'send 1-200 values' }, 400);
     for (const [k, v] of entries) {
       if (!validContentKey(k)) return c.json({ error: `invalid key ${k.slice(0, 80)}` }, 400);
-      if (v !== null && (typeof v !== 'string' || v.length > CONTENT_MAX)) return c.json({ error: `value for ${k} must be text up to ${CONTENT_MAX} characters, or null` }, 400);
+      if (v !== null && (typeof v !== 'string' || v.length > contentMax(k))) return c.json({ error: `value for ${k} must be text up to ${contentMax(k)} characters, or null` }, 400);
     }
     const uid = userOf(c).id;
     await db.transaction(async (tx) => {

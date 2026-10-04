@@ -12,6 +12,7 @@ import AdminContent from "./pages/app/AdminContent";
 import AdminDashboard from "./pages/app/AdminDashboard";
 import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
 import Blog, { BlogPost } from "./pages/Blog";
+import Legal from "./pages/Legal";
 import { captureRef } from "./lib/ref";
 
 // Keep a trainee referral code (?ref=CODE) for the Hub checkout.
@@ -40,6 +41,8 @@ function Router() {
       <Route path="/app/admin/blog/:id" component={AdminBlogEdit} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/privacy" component={Legal} />
+      <Route path="/terms" component={Legal} />
       {Object.entries(retiredPaths).map(([path, to]) => (
         <Route key={path} path={path}>
           <Redirect to={to} replace />

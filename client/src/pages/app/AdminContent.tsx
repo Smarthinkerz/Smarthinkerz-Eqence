@@ -15,6 +15,7 @@ const GROUPS: { title: string; page: string; keys: string[] }[] = [
   },
   { title: 'How it works', page: '/#how-it-works', keys: ['howit.title', 'howit.subtitle', 'howit.step1', 'howit.step1.desc', 'howit.step2', 'howit.step2.desc', 'howit.step3', 'howit.step3.desc'] },
   { title: 'Pricing', page: '/#pricing', keys: ['pricing.title', 'pricing.subtitle', 'pricing.cta', 'pricing.contact', 'pricing.f.replies', 'pricing.f.included'] },
+  { title: 'Legal pages', page: '/privacy', keys: ['legal.privacy.title', 'legal.privacy.body', 'legal.terms.title', 'legal.terms.body'] },
   { title: 'Blog page', page: '/blog', keys: ['blog.hero.image', 'blog.hero.title', 'blog.hero.subtitle', 'blog.section.title', 'blog.section.subtitle', 'blog.readmore', 'blog.back', 'blog.empty'] },
 ];
 const LANGS = [{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ja', label: '日本語' }];
@@ -82,15 +83,16 @@ function Body() {
               const def = translations[lang]?.[k] ?? translations.en[k] ?? '';
               const id = `${k}|${lang}`;
               const v = draft[id] ?? '';
-              const long = def.length > 70 || k.endsWith('.desc') || k.endsWith('subtitle');
+              const legal = k.startsWith('legal.') && k.endsWith('.body');
+              const long = legal || def.length > 70 || k.endsWith('.desc') || k.endsWith('subtitle');
               const Field = long ? 'textarea' : 'input';
               return (
                 <div key={k}>
                   <label htmlFor={id} className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                     <code>{k}</code>{saved[id] && <span className="rounded bg-amber-50 px-1.5 text-amber-800">edited</span>}
                   </label>
-                  <Field id={id} dir={rtl ? 'rtl' : 'ltr'} value={v} placeholder={def} maxLength={5000}
-                    {...(long ? { rows: 2 } : {})}
+                  <Field id={id} dir={rtl ? 'rtl' : 'ltr'} value={v} placeholder={legal ? 'Paste the full text here (Markdown: ## for headings, - for lists).' : def} maxLength={legal ? 60000 : 5000}
+                    {...(long ? { rows: legal ? 16 : 2 } : {})}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft({ ...draft, [id]: e.target.value })}
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#C41E3A] outline-none placeholder:text-gray-400" />
                   {k.endsWith('.image') && (

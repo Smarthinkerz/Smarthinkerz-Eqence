@@ -18,6 +18,9 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 // admin content editor (GET /api/content) overrides them key by key.
 export const translations: Record<string, Record<string, string>> = {
   en: {
+    'legal.privacy.title': 'Privacy Policy',
+    'legal.terms.title': 'Terms of Service',
+    'legal.pending': 'This page is being prepared. For questions in the meantime, email reply@smarthinkerz.com.',
     'nav.blog': 'Blog',
     'blog.hero.title': 'Blog',
     'blog.hero.subtitle': 'Guides and news on managing reviews for Shopify stores, in Arabic and English.',
@@ -131,6 +134,9 @@ export const translations: Record<string, Record<string, string>> = {
     'payment.subtitle': 'Secure payment powered by Tap Payments',
   },
   ja: {
+    'legal.privacy.title': 'プライバシーポリシー',
+    'legal.terms.title': '利用規約',
+    'legal.pending': 'このページは準備中です。ご不明な点は reply@smarthinkerz.com までお問い合わせください。',
     'nav.blog': 'ブログ',
     'blog.hero.title': 'ブログ',
     'blog.hero.subtitle': 'Shopify ストアのレビュー管理に関するガイドとお知らせ。',
@@ -229,6 +235,9 @@ export const translations: Record<string, Record<string, string>> = {
     'payment.subtitle': 'Tap Paymentsによる安全な決済',
   },
   ar: {
+    'legal.privacy.title': 'سياسة الخصوصية',
+    'legal.terms.title': 'شروط الخدمة',
+    'legal.pending': 'يجري إعداد هذه الصفحة. للاستفسار في الأثناء، راسلنا على reply@smarthinkerz.com.',
     'nav.blog': 'المدونة',
     'blog.hero.title': 'المدونة',
     'blog.hero.subtitle': 'أدلة وأخبار حول إدارة التقييمات لمتاجر Shopify، بالعربية والإنجليزية.',
