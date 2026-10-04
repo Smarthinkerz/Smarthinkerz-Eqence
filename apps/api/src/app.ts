@@ -37,6 +37,7 @@ app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw));
 app.use('/api/v1/*', async (c, next) => {
   const s = await auth.api.getSession({ headers: c.req.raw.headers });
   if (!s) return c.json({ error: 'not signed in' }, 401);
+  if ((s.user as { disabled?: boolean }).disabled) return c.json({ error: 'account disabled' }, 403);
   c.set('session', s.session);
   c.set('user', s.user);
   await next();

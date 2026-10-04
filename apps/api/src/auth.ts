@@ -1,8 +1,9 @@
-import { account, auditLog, session, tenants, user, verification } from '@eqence/db';
+import { account, auditLog, session, tenants, twoFactor as twoFactorTable, user, verification } from '@eqence/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { hashPassword, verifyPassword } from 'better-auth/crypto';
+import { twoFactor } from 'better-auth/plugins';
 import { and, eq } from 'drizzle-orm';
 import { db } from './db';
 import { env } from './env';
@@ -23,7 +24,9 @@ export const auth = betterAuth({
   baseURL: env.publicUrl,
   basePath: '/api/auth',
   secret: env.authSecret,
-  database: drizzleAdapter(db, { provider: 'pg', schema: { user, session, account, verification } }),
+  database: drizzleAdapter(db, { provider: 'pg', schema: { user, session, account, verification, twoFactor: twoFactorTable } }),
+  // Authenticator-app codes. Admin routes require it (apps/api/src/cms.ts requireAdmin).
+  plugins: [twoFactor({ issuer: 'Eqence', accountLockout: { enabled: true, maxFailedAttempts: 5, durationSeconds: 900 } })],
   trustedOrigins: env.webOrigins,
   emailAndPassword: {
     enabled: true,
@@ -54,6 +57,7 @@ export const auth = betterAuth({
       isSuperUser: { type: 'boolean', input: false, defaultValue: false },
       effectivePlan: { type: 'string', input: false, required: false },
       legacyC2cId: { type: 'number', input: false, required: false },
+      disabled: { type: 'boolean', input: false, defaultValue: false },
     },
   },
   advanced: {
@@ -65,6 +69,15 @@ export const auth = betterAuth({
     ipAddress: { ipAddressHeaders: ['x-real-ip'] },
   },
   databaseHooks: {
+    session: {
+      create: {
+        // A disabled account never gets a session, whatever the sign-in method.
+        before: async (s) => {
+          const [u] = await db.select({ disabled: user.disabled }).from(user).where(eq(user.id, s.userId));
+          if (u?.disabled) throw new APIError('FORBIDDEN', { message: 'This account is disabled.' });
+        },
+      },
+    },
     user: {
       create: {
         // Every account owns exactly one tenant (workspace) from the moment it exists.

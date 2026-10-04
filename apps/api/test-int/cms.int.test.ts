@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 import { account, auditLog, blogPosts, siteContent, tenants, user } from '@eqence/db';
-import { inArray, like } from 'drizzle-orm';
+import { eq, inArray, like } from 'drizzle-orm';
 
 process.env.BETTER_AUTH_SECRET ||= 'test-only-secret-not-used-for-anything-real';
 process.env.PUBLIC_URL = 'https://api.eqence.com';
@@ -21,7 +21,8 @@ const cookies: Record<string, string> = {};
 async function makeUser(name: string, role: 'admin' | 'user') {
   const id = `cmstest-${tag}-${name}`, email = `${id}@example.invalid`;
   const pw = `Pw-${randomBytes(10).toString('hex')}!`, salt = randomBytes(16).toString('hex');
-  await db.insert(user).values({ id, name, email, emailVerified: true, role });
+  // Admin access needs two-factor; these CMS tests start from an admin who has it set up.
+  await db.insert(user).values({ id, name, email, emailVerified: true, role, twoFactorEnabled: role === 'admin' });
   await db.insert(account).values({ id: randomUUID(), accountId: id, providerId: 'credential', userId: id, password: `c2c-scrypt$${salt}:${scryptSync(pw, salt, 64).toString('hex')}` });
   ids.push(id);
   const r = await app.request('/api/auth/sign-in/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: ORIGIN }, body: JSON.stringify({ email, password: pw }) });
@@ -133,4 +134,12 @@ test('admin overview: counts for admins, 403 for others, no personal data', asyn
   }
   assert.ok((o.accounts.users as number) >= 2, 'counts the two test accounts');
   assert.ok(!JSON.stringify(o).includes('@'), 'no email addresses in the overview');
+});
+
+test('an admin without two-factor set up is refused with a clear code', async () => {
+  await makeUser('admin-no2fa', 'admin');
+  await db.update(user).set({ twoFactorEnabled: false }).where(eq(user.id, `cmstest-${tag}-admin-no2fa`));
+  const r = await call('admin-no2fa', 'GET', '/api/v1/admin/overview');
+  assert.equal(r.status, 403);
+  assert.equal((await r.json() as { code?: string }).code, 'admin_2fa_required');
 });

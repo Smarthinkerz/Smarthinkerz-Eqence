@@ -15,6 +15,13 @@
       "when": 1791039608998,
       "tag": "0001_cms_blog",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791114357332,
+      "tag": "0002_admin_2fa_users",
+      "breakpoints": true
     }
   ]
 }

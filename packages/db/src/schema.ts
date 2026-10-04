@@ -24,6 +24,10 @@ export const user = pgTable('user', {
   effectivePlan: text('effective_plan'),
   // Set only for accounts migrated from Comment to Customer (its integer cc_users.id).
   legacyC2cId: integer('legacy_c2c_id').unique(),
+  // Better Auth two-factor plugin; required for admin access.
+  twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
+  // Set by an admin. A disabled account cannot sign in and its sessions are revoked.
+  disabled: boolean('disabled').notNull().default(false),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -54,6 +58,17 @@ export const account = pgTable('account', {
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 }, (t) => [index('account_user_idx').on(t.userId)]);
+
+// Better Auth two-factor plugin: TOTP secret and backup codes (stored encrypted by Better Auth).
+export const twoFactor = pgTable('two_factor', {
+  id: text('id').primaryKey(),
+  secret: text('secret').notNull(),
+  backupCodes: text('backup_codes').notNull(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  verified: boolean('verified').default(true),
+  failedVerificationCount: integer('failed_verification_count').default(0),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
+}, (t) => [index('two_factor_user_idx').on(t.userId)]);
 
 export const verification = pgTable('verification', {
   id: text('id').primaryKey(),

@@ -15,10 +15,11 @@ import { auditLog, blogPosts, siteContent } from '@eqence/db';
 import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import type { Context, Hono, Next } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { mountAdminUsers } from './adminUsers';
 import { db } from './db';
 import { env } from './env';
 
-type U = { id: string; role?: string; isSuperUser?: boolean };
+type U = { id: string; role?: string; isSuperUser?: boolean; twoFactorEnabled?: boolean | null };
 
 // The signed-in user set by the /api/v1 session middleware. Typed loosely because route-level
 // middleware (bodyLimit) narrows Hono's context variables.
@@ -30,6 +31,8 @@ export function isAdmin(u: U | undefined | null) {
 
 async function requireAdmin(c: Context, next: Next) {
   if (!isAdmin(userOf(c))) return c.json({ error: 'admin only' }, 403);
+  // Admin access requires two-factor sign-in to be set up on the account.
+  if (!userOf(c).twoFactorEnabled) return c.json({ error: 'two-factor authentication must be set up for admin access', code: 'admin_2fa_required' }, 403);
   // Cookies alone must not authorise a write: the request has to come from our web app.
   if (c.req.method !== 'GET' && !env.webOrigins.includes(c.req.header('origin') ?? '')) {
     return c.json({ error: 'cross-site request refused' }, 403);
@@ -76,6 +79,7 @@ export function mountCms(app: Hono<any>) {
 
   /* ── admin (session required by the /api/v1 middleware, then admin role) ── */
   app.use('/api/v1/admin/*', requireAdmin);
+  mountAdminUsers(app);
 
   // Admin dashboard: counts only, no personal data.
   app.get('/api/v1/admin/overview', async (c) => {
