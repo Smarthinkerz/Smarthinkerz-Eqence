@@ -20,7 +20,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
 }
 
 export interface Me {
-  user: { id: string; name: string; email: string; emailVerified: boolean; role: string; isSuperUser: boolean };
+  user: { id: string; name: string; email: string; emailVerified: boolean; role: string; isSuperUser: boolean; twoFactorEnabled: boolean };
   tenant?: { id: string; name: string; plan: string | null; planStatus: string; planCycle: string | null; planExpiresAt: string | null };
 }
 
@@ -43,7 +43,7 @@ export interface ConnectionRow {
 
 export const auth = {
   session: () => api<{ user?: Me['user'] } | null>('/api/auth/get-session'),
-  signIn: (email: string, password: string) => api('/api/auth/sign-in/email', { method: 'POST', body: { email, password } }),
+  signIn: (email: string, password: string) => api<{ twoFactorRedirect?: boolean }>('/api/auth/sign-in/email', { method: 'POST', body: { email, password } }),
   signUp: (name: string, email: string, password: string) =>
     api('/api/auth/sign-up/email', { method: 'POST', body: { name, email, password, callbackURL: `${location.origin}/app` } }),
   signOut: () => api('/api/auth/sign-out', { method: 'POST', body: {} }),

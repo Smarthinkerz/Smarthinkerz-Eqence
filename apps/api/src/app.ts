@@ -47,7 +47,7 @@ app.get('/api/v1/me', async (c) => {
   const u = c.get('user');
   const [tenant] = await db.select().from(tenants).where(eq(tenants.ownerUserId, u.id));
   return c.json({
-    user: { id: u.id, name: u.name, email: u.email, emailVerified: u.emailVerified, role: u.role, isSuperUser: u.isSuperUser },
+    user: { id: u.id, name: u.name, email: u.email, emailVerified: u.emailVerified, role: u.role, isSuperUser: u.isSuperUser, twoFactorEnabled: !!(u as { twoFactorEnabled?: boolean }).twoFactorEnabled },
     tenant: tenant && {
       id: tenant.id, name: tenant.name, plan: tenant.plan, planStatus: tenant.planStatus,
       planCycle: tenant.planCycle, planExpiresAt: tenant.planExpiresAt,

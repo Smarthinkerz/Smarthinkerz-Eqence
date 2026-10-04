@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useSearch } from 'wouter';
+import TwoFactorCode from '../../components/TwoFactorCode';
 import { ApiError, auth } from '../../lib/api';
 
 const inputClass = 'w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C41E3A] focus:ring-2 focus:ring-[#C41E3A]/20 outline-none';
@@ -15,13 +16,15 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [needCode, setNeedCode] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError(''); setNotice('');
     try {
       if (mode === 'in') {
-        await auth.signIn(email, password);
+        const r = await auth.signIn(email, password);
+        if (r?.twoFactorRedirect) { setNeedCode(true); return; }
         navigate(next);
       } else if (mode === 'up') {
         await auth.signUp(name, email, password);
@@ -49,6 +52,7 @@ export default function SignIn() {
         </h1>
         {error && <div role="alert" className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
         {notice && <div role="status" className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm">{notice}</div>}
+        {needCode ? <TwoFactorCode onVerified={() => navigate(next)} /> : (
         <form onSubmit={submit} className="space-y-4">
           {mode === 'up' && (
             <div>
@@ -71,7 +75,7 @@ export default function SignIn() {
           <button type="submit" disabled={busy} className="w-full btn-primary disabled:opacity-60">
             {busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : mode === 'up' ? 'Create account' : 'Send reset link'}
           </button>
-        </form>
+        </form>)}
         <div className="mt-5 text-sm text-gray-600 space-y-2">
           {mode === 'in' && <>
             <button className="text-[#C41E3A] hover:underline" onClick={() => setMode('forgot')}>Forgot your password?</button>

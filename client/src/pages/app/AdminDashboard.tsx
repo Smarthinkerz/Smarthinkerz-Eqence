@@ -24,7 +24,7 @@ function Stat({ label, value, hint }: { label: string; value: number | string; h
 }
 
 export default function AdminDashboard() {
-  return <AppShell>{(me) => <Body name={me.user.name} />}</AppShell>;
+  return <AppShell admin>{(me) => <Body name={me.user.name} />}</AppShell>;
 }
 
 function Body({ name }: { name: string }) {

@@ -1,6 +1,7 @@
 // Signed-in area of Eqence. Redirects to /app/sign-in when there is no session.
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
+import TwoFactorSetup from '../../components/TwoFactorSetup';
 import { api, auth, type Me } from '../../lib/api';
 
 const nav = [
@@ -12,14 +13,15 @@ const nav = [
 
 export function useMe() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
+  const [n, setN] = useState(0);
   useEffect(() => {
     api<Me>('/api/v1/me').then(setMe).catch(() => setMe(null));
-  }, []);
-  return me;
+  }, [n]);
+  return { me, reload: () => setN((x) => x + 1) };
 }
 
-export default function AppShell({ children }: { children: (me: Me) => ReactNode }) {
-  const me = useMe();
+export default function AppShell({ children, admin = false }: { children: (me: Me) => ReactNode; admin?: boolean }) {
+  const { me, reload } = useMe();
   const [location, navigate] = useLocation();
 
   useEffect(() => {
@@ -52,7 +54,13 @@ export default function AppShell({ children }: { children: (me: Me) => ReactNode
           </div>
         </div>
       </header>
-      <main className="max-w-6xl mx-auto px-4 py-6">{children(me)}</main>
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        {admin && !(me.user.role === 'admin' || me.user.isSuperUser)
+          ? <p className="bg-white rounded-xl border border-gray-200 p-6 text-gray-700">This area is for Eqence administrators.</p>
+          : admin && !me.user.twoFactorEnabled
+            ? <TwoFactorSetup onDone={reload} />
+            : children(me)}
+      </main>
     </div>
   );
 }

@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { api, ApiError, auth, type Me } from '../lib/api';
+import TwoFactorCode from './TwoFactorCode';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from './ui/dialog';
 
 const input = 'w-full px-4 py-2.5 rounded-lg border border-gray-200 text-gray-900 focus:border-[#C41E3A] focus:ring-2 focus:ring-[#C41E3A]/20 outline-none';
@@ -15,25 +16,19 @@ export default function AdminLoginDialog({ className, label }: { className?: str
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [needCode, setNeedCode] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError('');
     try {
-      await auth.signIn(email, password);
-      const me = await api<Me>('/api/v1/me');
-      if (me.user.role === 'admin' || me.user.isSuperUser) {
-        setOpen(false);
-        setPassword('');
-        navigate('/app/admin');
-        return;
-      }
-      await auth.signOut().catch(() => {});
-      setError('This account does not have admin access.');
+      const r = await auth.signIn(email, password);
+      if (r?.twoFactorRedirect) { setNeedCode(true); return; }
+      await finish();
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0;
       setError(status === 401 ? 'Email or password is incorrect.'
-        : status === 403 ? 'Please confirm this account\'s email first.'
+        : status === 403 ? 'This account is disabled, or its email is not confirmed yet.'
         : status === 429 ? 'Too many attempts. Wait a minute and try again.'
         : 'Sign-in failed. Please try again.');
     } finally {
@@ -41,8 +36,26 @@ export default function AdminLoginDialog({ className, label }: { className?: str
     }
   }
 
+  async function finish() {
+    try {
+      const me = await api<Me>('/api/v1/me');
+      if (me.user.role === 'admin' || me.user.isSuperUser) {
+        setOpen(false);
+        setPassword('');
+        setNeedCode(false);
+        navigate('/app/admin');
+        return;
+      }
+      await auth.signOut().catch(() => {});
+      setNeedCode(false);
+      setError('This account does not have admin access.');
+    } catch {
+      setError('Sign-in failed. Please try again.');
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setError(''); setPassword(''); } }}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setError(''); setPassword(''); setNeedCode(false); } }}>
       <DialogTrigger asChild>
         <button type="button" className={className}>{label}</button>
       </DialogTrigger>
@@ -50,6 +63,7 @@ export default function AdminLoginDialog({ className, label }: { className?: str
         <DialogTitle className="text-xl font-bold">Admin login</DialogTitle>
         <DialogDescription className="text-sm text-gray-500">For Eqence site administrators.</DialogDescription>
         {error && <div role="alert" className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
+        {needCode ? <TwoFactorCode onVerified={finish} /> : (
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label htmlFor="admin-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -60,7 +74,7 @@ export default function AdminLoginDialog({ className, label }: { className?: str
             <input id="admin-password" type="password" required autoComplete="current-password" className={input} value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <button type="submit" disabled={busy} className="w-full btn-primary disabled:opacity-60">{busy ? 'Signing in…' : 'Sign in'}</button>
-        </form>
+        </form>)}
       </DialogContent>
     </Dialog>
   );

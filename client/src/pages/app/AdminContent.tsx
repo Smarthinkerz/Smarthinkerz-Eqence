@@ -21,7 +21,7 @@ const GROUPS: { title: string; page: string; keys: string[] }[] = [
 const LANGS = [{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ja', label: '日本語' }];
 
 export default function AdminContent() {
-  return <AppShell>{() => <Body />}</AppShell>;
+  return <AppShell admin>{() => <Body />}</AppShell>;
 }
 
 function Body() {
