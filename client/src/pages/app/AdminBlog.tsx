@@ -2,7 +2,7 @@
 // writing assistant. AI output only goes into the form; nothing is saved until "Save".
 import { useEffect, useState } from 'react';
 import { Link, useRoute, useLocation } from 'wouter';
-import Markdown from '../../components/Markdown';
+import MarkdownEditor from '../../components/MarkdownEditor';
 import { api, API_URL } from '../../lib/api';
 import AppShell from './AppShell';
 
@@ -71,7 +71,6 @@ function EditBody() {
   const [post, setPost] = useState<Partial<AdminPost> | null>(isNew ? { ...empty } : null);
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [preview, setPreview] = useState<'en' | 'ar' | null>(null);
   const [topic, setTopic] = useState('');
   const [aiOut, setAiOut] = useState('');
 
@@ -168,9 +167,7 @@ function EditBody() {
             <h2 className="font-semibold text-gray-900">English</h2>
             <input className={input} placeholder="Title" value={post.titleEn ?? ''} onChange={(e) => set('titleEn', e.target.value)} maxLength={300} />
             <textarea className={input} rows={2} placeholder="Excerpt (shown on the blog card)" value={post.excerptEn ?? ''} onChange={(e) => set('excerptEn', e.target.value)} maxLength={600} />
-            <textarea className={`${input} font-mono`} rows={16} placeholder="Body in Markdown: ## heading, - list, **bold**, [link](https://…)" value={post.bodyEn ?? ''} onChange={(e) => set('bodyEn', e.target.value)} />
-            <button className="text-sm text-[#C41E3A] hover:underline" onClick={() => setPreview(preview === 'en' ? null : 'en')}>{preview === 'en' ? 'Hide preview' : 'Preview'}</button>
-            {preview === 'en' && <div className="rounded-lg border border-gray-100 p-4"><Markdown source={post.bodyEn ?? ''} /></div>}
+            <MarkdownEditor rows={16} placeholder="Write or paste the post. Links: [text](https://…), images: ![alt](https://…)" value={post.bodyEn ?? ''} onChange={(v) => set('bodyEn', v)} />
           </section>
           <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
             <div className="flex items-center justify-between">
@@ -179,9 +176,7 @@ function EditBody() {
             </div>
             <input dir="rtl" className={input} placeholder="العنوان" value={post.titleAr ?? ''} onChange={(e) => set('titleAr', e.target.value)} maxLength={300} />
             <textarea dir="rtl" className={input} rows={2} placeholder="المقتطف" value={post.excerptAr ?? ''} onChange={(e) => set('excerptAr', e.target.value)} maxLength={600} />
-            <textarea dir="rtl" className={`${input} font-mono`} rows={12} placeholder="نص المقالة (Markdown)" value={post.bodyAr ?? ''} onChange={(e) => set('bodyAr', e.target.value)} />
-            <button className="text-sm text-[#C41E3A] hover:underline" onClick={() => setPreview(preview === 'ar' ? null : 'ar')}>{preview === 'ar' ? 'Hide preview' : 'Preview'}</button>
-            {preview === 'ar' && <div className="rounded-lg border border-gray-100 p-4"><Markdown source={post.bodyAr ?? ''} dir="rtl" /></div>}
+            <MarkdownEditor dir="rtl" rows={12} placeholder="نص المقالة" value={post.bodyAr ?? ''} onChange={(v) => set('bodyAr', v)} />
           </section>
         </div>
 

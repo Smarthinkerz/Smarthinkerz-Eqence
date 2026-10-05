@@ -2,6 +2,7 @@
 // overrides it on the live site for that language. Clearing a field restores the default.
 import { useEffect, useMemo, useState } from 'react';
 import { translations, useI18n } from '../../contexts/I18nContext';
+import MarkdownEditor from '../../components/MarkdownEditor';
 import { api, API_URL } from '../../lib/api';
 import AppShell from './AppShell';
 import { AdminTabs } from './AdminBlog';
@@ -91,10 +92,16 @@ function Body() {
                   <label htmlFor={id} className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                     <code>{k}</code>{saved[id] && <span className="rounded bg-amber-50 px-1.5 text-amber-800">edited</span>}
                   </label>
-                  <Field id={id} dir={rtl ? 'rtl' : 'ltr'} value={v} placeholder={legal ? 'Paste the full text here (Markdown: ## for headings, - for lists).' : def} maxLength={legal ? 60000 : 5000}
-                    {...(long ? { rows: legal ? 16 : 2 } : {})}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft({ ...draft, [id]: e.target.value })}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#C41E3A] outline-none placeholder:text-gray-400" />
+                  {legal ? (
+                    <MarkdownEditor id={id} dir={rtl ? 'rtl' : 'ltr'} value={v} maxLength={60000} rows={20}
+                      placeholder="Paste or write the full text here. Use the toolbar for titles, bold and bullet points."
+                      onChange={(nv) => setDraft((d) => ({ ...d, [id]: nv }))} />
+                  ) : (
+                    <Field id={id} dir={rtl ? 'rtl' : 'ltr'} value={v} placeholder={def} maxLength={5000}
+                      {...(long ? { rows: 2 } : {})}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft({ ...draft, [id]: e.target.value })}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#C41E3A] outline-none placeholder:text-gray-400" />
+                  )}
                   {k.endsWith('.image') && (
                     <div className="mt-2 flex flex-wrap items-center gap-3">
                       {v && <img src={v} alt="" className="h-16 w-28 rounded object-cover" />}

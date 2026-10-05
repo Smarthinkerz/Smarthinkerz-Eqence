@@ -1,6 +1,6 @@
 // Renders blog Markdown as React elements. No HTML is ever passed through: text becomes
 // text nodes, so a post cannot inject scripts or markup. Supports ## / ### headings,
-// paragraphs, - and 1. lists, > quotes, **bold**, *italic*, [links](https://…) and
+// paragraphs, - (or • pasted from documents) and 1. lists, > quotes, **bold**, *italic*, [links](https://…) and
 // ![images](https://…). Links and images must be http(s); anything else is shown as text.
 import type { ReactNode } from 'react';
 
@@ -50,10 +50,24 @@ export default function Markdown({ source, dir }: { source: string; dir?: 'rtl' 
     if (quote.length) { blocks.push(<blockquote key={n++} className="mb-5 border-s-4 border-[#C41E3A]/40 ps-4 text-gray-600 italic">{inline(quote.join(' '), `q${n}`)}</blockquote>); quote = []; }
   };
 
+  // A blank line ends paragraphs and quotes; a list stays open across it if another item follows.
+  let gap = false;
   for (const raw of lines) {
     const line = raw.trimEnd();
     let m: RegExpMatchArray | null;
-    if (!line.trim()) { flush(); continue; }
+    if (!line.trim()) {
+      if (para.length || quote.length) flush();
+      gap = true;
+      continue;
+    }
+    const item = line.match(/^\s*(?:[-*+•●▪■◦‣·]|\d+[.)])\s+(.+)$/);
+    // An indented line right under a list item is that item wrapping onto a new line.
+    if (list && !item && !gap && /^\s/.test(raw)) {
+      list.items[list.items.length - 1] += ` ${line.trim()}`;
+      continue;
+    }
+    if (list && gap && !item) flush();
+    gap = false;
     if ((m = line.match(/^(#{1,3})\s+(.+)$/))) {
       flush();
       const level = m[1].length;
@@ -62,11 +76,11 @@ export default function Markdown({ source, dir }: { source: string; dir?: 'rtl' 
       blocks.push(<El key={n++} className={`${cls} font-bold text-gray-900 mt-8 mb-4`}>{inline(m[2], `h${n}`)}</El>);
       continue;
     }
-    if ((m = line.match(/^\s*[-*]\s+(.+)$/)) || (m = line.match(/^\s*\d+[.)]\s+(.+)$/))) {
+    if (item) {
       const ordered = /^\s*\d/.test(line);
       if (para.length || quote.length || (list && list.ordered !== ordered)) flush();
       list ??= { ordered, items: [] };
-      list.items.push(m[1]);
+      list.items.push(item[1]);
       continue;
     }
     if ((m = line.match(/^>\s?(.*)$/))) {
