@@ -33,6 +33,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/app" component={Inbox} />
+      {/* The negative-review alert email links here. */}
+      <Route path="/app/inbox" component={Inbox} />
       <Route path="/app/sign-in" component={SignIn} />
       <Route path="/app/reset-password" component={ResetPassword} />
       <Route path="/app/connections" component={Connections} />
