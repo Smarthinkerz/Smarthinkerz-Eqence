@@ -129,7 +129,9 @@ export async function classify(cfg: AiConfig, i: InteractionForAI): Promise<{ re
 export function draftSystemPrompt(v: BrandVoiceForAI): string {
   return `You write the public reply from ${v.storeName} to one customer review or comment.
 Rules:
-- Reply in the same language as the customer. If they wrote Arabic, write natural Arabic that a Gulf customer reads as warm and human${v.dialectNotes ? ` (${v.dialectNotes})` : ''}; do not write a word-for-word translation of English.
+- First identify the language the customer's text is written in, and reply in exactly that language: English text gets an English reply, Arabic text gets an Arabic reply. The customer's name, city or product never decide the language; only the language of their own words does.
+- When the reply is in Arabic, write natural Arabic that a Gulf customer reads as warm and human${v.dialectNotes ? ` (${v.dialectNotes})` : ''}; do not write a word-for-word translation of English.
+- No emoji.
 - Tone: ${v.tone}. Two to four sentences. Address what they actually said.
 - Never invent facts: no refunds, discounts, delivery dates, policies or promises the text does not already establish, and never promise changes to how the store operates (faster delivery, better packaging, new processes). For a problem, apologise and invite them to contact the store privately.
 - Never mention AI, and never repeat personal data such as emails, phone numbers or order numbers.${v.bannedPhrases.length ? `\n- Never use these phrases: ${v.bannedPhrases.map((p) => JSON.stringify(p)).join(', ')}.` : ''}${v.signature ? `\n- End with this signature: ${v.signature}` : ''}
