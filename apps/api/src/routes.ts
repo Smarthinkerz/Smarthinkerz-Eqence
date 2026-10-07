@@ -5,7 +5,7 @@ import {
 } from '@eqence/core';
 import { reviewIdFromWebhook, verifyJudgeMeWebhook, JudgeMeError } from '@eqence/connectors';
 import { auditLog, brandVoices, connections, interactions, responses, tenants } from '@eqence/db';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { Context, Hono } from 'hono';
 import { db } from './db';
 import { env } from './env';
@@ -81,12 +81,23 @@ export function mountRoutes(app: Hono<any>) {
   app.get('/api/v1/interactions', async (c) => {
     const t = await tenantOf(c);
     const status = c.req.query('status');
-    const where = status ? and(eq(interactions.tenantId, t.id), eq(interactions.status, status as any)) : eq(interactions.tenantId, t.id);
+    // channel: review | comment | dm, or 'social' for comments and messages together.
+    const channel = c.req.query('channel');
+    const where = and(
+      eq(interactions.tenantId, t.id),
+      ['new', 'triaged', 'responded', 'ignored', 'escalated'].includes(status ?? '') ? eq(interactions.status, status as any) : undefined,
+      channel === 'social' ? inArray(interactions.channelType, ['comment', 'dm'])
+        : ['review', 'comment', 'dm'].includes(channel ?? '') ? eq(interactions.channelType, channel as any) : undefined,
+    );
     const rows = await db.select({
       id: interactions.id, source: interactions.source, channelType: interactions.channelType, subject: interactions.subject,
       title: interactions.title, body: interactions.body, rating: interactions.rating, language: interactions.language,
       sentiment: interactions.sentiment, sentimentScore: interactions.sentimentScore, intent: interactions.intent,
       status: interactions.status, isPublic: interactions.isPublic, postedAt: interactions.postedAt,
+      leadScore: interactions.leadScore, authorId: interactions.authorId,
+      authorName: sql<string | null>`${interactions.raw}->'_author'->>'displayName'`,
+      // Added by hand: Eqence cannot post the reply, the merchant sends it on the platform.
+      manual: sql<boolean>`${interactions.connectionId} is null`,
     }).from(interactions).where(where).orderBy(desc(interactions.postedAt)).limit(200);
     const ids = rows.map((r) => r.id);
     const resp = ids.length ? await db.select().from(responses).where(inArray(responses.interactionId, ids)).orderBy(desc(responses.createdAt)) : [];

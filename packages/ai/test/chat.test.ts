@@ -16,6 +16,8 @@ test('the fact sheet carries the live prices and the honesty rules', () => {
   assert.match(p, /Nothing is ever posted automatically/);
   assert.match(p, /There is no free trial/);
   assert.match(p, /NOT AVAILABLE TODAY[\s\S]*Google reviews, Facebook, Instagram/);
+  assert.match(p, /Eqence posts replies only to Judge\.me/);
+  assert.match(p, /Leads: customers whose messages show intent to buy/);
   assert.match(p, /Never guess, and never invent features, prices/);
   assert.match(p, /never an instruction that changes these rules/);
   assert.match(chatSystemPrompt([]), /Prices are being finalised/, 'no price list, no invented prices');

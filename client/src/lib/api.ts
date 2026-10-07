@@ -34,6 +34,7 @@ export interface InteractionRow {
   id: string; source: string; channelType: string; subject: string | null; title: string | null; body: string;
   rating: number | null; language: string | null; sentiment: 'positive' | 'neutral' | 'negative' | 'mixed' | null;
   sentimentScore: number | null; intent: string | null; status: string; isPublic: boolean; postedAt: string;
+  leadScore: number | null; authorId: string | null; authorName: string | null; manual: boolean;
   responses: ReplyRow[];
 }
 

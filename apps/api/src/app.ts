@@ -8,6 +8,7 @@ import { db } from './db';
 import { env } from './env';
 import { mountAccount } from './account';
 import { mountCms } from './cms';
+import { mountCrm } from './crm';
 import { mountPublicApi } from './publicApi';
 import { mountRoutes } from './routes';
 import { refuseBanned } from './security';
@@ -66,6 +67,7 @@ app.get('/api/v1/me', async (c) => {
 
 mountRoutes(app);
 mountAccount(app);
+mountCrm(app);
 mountCms(app);
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));

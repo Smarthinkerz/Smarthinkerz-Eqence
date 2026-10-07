@@ -81,18 +81,19 @@ export function mountAccount(app: Hono<any>) {
         db.select({
           id: interactions.id, source: interactions.source, channelType: interactions.channelType, subject: interactions.subject, title: interactions.title,
           body: interactions.body, rating: interactions.rating, language: interactions.language, sentiment: interactions.sentiment, intent: interactions.intent,
+          leadScore: interactions.leadScore, authorId: interactions.authorId,
           status: interactions.status, postedAt: interactions.postedAt, permalink: interactions.permalink,
         }).from(interactions).where(eq(interactions.tenantId, t.id)).orderBy(desc(interactions.postedAt)).limit(20000),
         db.select({ id: responses.id, interactionId: responses.interactionId, body: responses.body, language: responses.language, generatedBy: responses.generatedBy, status: responses.status, publishedAt: responses.publishedAt, createdAt: responses.createdAt })
           .from(responses).where(eq(responses.tenantId, t.id)).limit(20000),
         db.select().from(brandVoices).where(eq(brandVoices.tenantId, t.id)),
         db.select().from(sequences).where(eq(sequences.tenantId, t.id)),
-        db.select({ id: authors.id, displayName: authors.displayName, interactionCount: authors.interactionCount, firstSeenAt: authors.firstSeenAt, lastSeenAt: authors.lastSeenAt })
+        db.select({ id: authors.id, displayName: authors.displayName, stage: authors.stage, notes: authors.notes, tags: authors.tags, email: authors.email, phone: authors.phone, firstSeenAt: authors.firstSeenAt, lastSeenAt: authors.lastSeenAt })
           .from(authors).where(eq(authors.tenantId, t.id)).limit(20000),
         db.select({ month: sql<string>`to_char(date_trunc('month', ${aiActions.createdAt}), 'YYYY-MM')`, kind: aiActions.kind, billable: aiActions.billable, n: sql<number>`count(*)::int` })
           .from(aiActions).where(eq(aiActions.tenantId, t.id)).groupBy(sql`1`, aiActions.kind, aiActions.billable),
       ]);
-      return { connections: conn, interactions: inter, replies: resp, brandVoices: voices, sequences: seqs, reviewers: people, aiUsageByMonth: usage };
+      return { connections: conn, interactions: inter, replies: resp, brandVoices: voices, sequences: seqs, customers: people, aiUsageByMonth: usage };
     };
     const body = {
       exportedAt: new Date().toISOString(), product: 'Eqence',

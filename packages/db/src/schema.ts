@@ -110,7 +110,7 @@ export const hubEvents = pgTable('hub_events', {
 /* ───────────── Interaction model (merge-spec §3) ───────────── */
 
 export const source = pgEnum('source', [
-  'judgeme', 'shopify', 'google', 'facebook', 'instagram', 'tiktok', 'trustpilot', 'manual',
+  'judgeme', 'shopify', 'google', 'facebook', 'instagram', 'tiktok', 'trustpilot', 'manual', 'whatsapp',
 ]);
 export const channelType = pgEnum('channel_type', ['review', 'comment', 'dm', 'mention', 'question']);
 export const connectionStatus = pgEnum('connection_status', ['active', 'expired', 'revoked', 'error']);
@@ -145,7 +145,16 @@ export const authors = pgTable('authors', {
   firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   interactionCount: integer('interaction_count').notNull().default(0),
-}, (t) => [index('authors_tenant_idx').on(t.tenantId)]);
+  // Who this is on the platform: '<source>:<platform id>' or '<source>:name:<name>'. One customer record per key.
+  key: text('key'),
+  // CRM fields the merchant fills in. stage: new | contacted | qualified | won | lost.
+  stage: text('stage').notNull().default('new'),
+  notes: text('notes'),
+  tags: text('tags').array().notNull().default([]),
+  email: text('email'),
+  phone: text('phone'),
+  updatedAt: updatedAt(),
+}, (t) => [index('authors_tenant_idx').on(t.tenantId), uniqueIndex('authors_tenant_key_idx').on(t.tenantId, t.key)]);
 
 export const interactions = pgTable('interactions', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -167,6 +176,8 @@ export const interactions = pgTable('interactions', {
   sentiment: sentiment('sentiment'),
   sentimentScore: real('sentiment_score'),
   intent: intent('intent'),
+  // 0..100: how strongly the customer shows intent to buy. Set by classification.
+  leadScore: smallint('lead_score'),
   isPublic: boolean('is_public').notNull(),
   status: interactionStatus('status').notNull().default('new'),
   permalink: text('permalink'),
@@ -174,6 +185,7 @@ export const interactions = pgTable('interactions', {
 }, (t) => [
   uniqueIndex('interactions_tenant_source_external_idx').on(t.tenantId, t.source, t.externalId),
   index('interactions_tenant_status_posted_idx').on(t.tenantId, t.status, t.postedAt),
+  index('interactions_author_idx').on(t.authorId),
 ]);
 
 export const brandVoices = pgTable('brand_voices', {

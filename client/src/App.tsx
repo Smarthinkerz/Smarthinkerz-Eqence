@@ -14,6 +14,9 @@ import AdminUsers from "./pages/app/AdminUsers";
 import { AdminAudit, AdminSecurity, AdminSystem } from "./pages/app/AdminOps";
 import Account from "./pages/app/Account";
 import Sequences from "./pages/app/Sequences";
+import Comments from "./pages/app/Comments";
+import Leads from "./pages/app/Leads";
+import Customers from "./pages/app/Customers";
 import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
 import Blog, { BlogPost } from "./pages/Blog";
 import Legal from "./pages/Legal";
@@ -39,6 +42,9 @@ function Router() {
       <Route path="/app/reset-password" component={ResetPassword} />
       <Route path="/app/connections" component={Connections} />
       <Route path="/app/brand-voice" component={BrandVoice} />
+      <Route path="/app/comments" component={Comments} />
+      <Route path="/app/leads" component={Leads} />
+      <Route path="/app/customers" component={Customers} />
       <Route path="/app/sequences" component={Sequences} />
       <Route path="/app/account" component={Account} />
       <Route path="/app/billing" component={Billing} />

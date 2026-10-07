@@ -6,6 +6,9 @@ import { api, auth, type Me } from '../../lib/api';
 
 const nav = [
   { href: '/app', label: 'Inbox' },
+  { href: '/app/comments', label: 'Comments' },
+  { href: '/app/leads', label: 'Leads' },
+  { href: '/app/customers', label: 'Customers' },
   { href: '/app/connections', label: 'Connections' },
   { href: '/app/brand-voice', label: 'Brand voice' },
   { href: '/app/sequences', label: 'Auto-DM' },

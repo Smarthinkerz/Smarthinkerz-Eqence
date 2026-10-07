@@ -13,6 +13,7 @@ export interface Classification {
   sentiment: Sentiment;
   sentimentScore: number;     // -1 .. 1
   intent: Intent;
+  leadScore: number | null;   // 0 .. 100, intent to buy; null when the model gave none
 }
 
 export interface InteractionForAI {
@@ -101,7 +102,8 @@ Return only a JSON object with exactly these keys:
   "language": the BCP-47 primary language tag of the customer's text (e.g. "ar", "en", "fr"); for mixed Arabic-English text use the dominant language,
   "sentiment": one of "positive", "neutral", "negative", "mixed",
   "sentiment_score": a number from -1 (very negative) to 1 (very positive),
-  "intent": one of "complaint", "praise", "question", "purchase_intent", "spam", "other".
+  "intent": one of "complaint", "praise", "question", "purchase_intent", "spam", "other",
+  "lead_score": a whole number from 0 to 100 for how strongly this customer shows intent to buy now or again: asking the price, availability, sizes, shipping or how to order, or stating a quantity or urgency, scores high (70-100); a question that may lead to a purchase scores in the middle (40-69); praise after buying scores lower (20-45) unless they say they will buy again; complaints, spam and unrelated text score low (0-20).
 Read Gulf and other Arabic dialects as they are; do not translate first. A star rating is a strong signal but the text wins when they disagree.`;
 
 export function parseClassification(obj: Record<string, unknown>): Classification {
@@ -113,11 +115,14 @@ export function parseClassification(obj: Record<string, unknown>): Classificatio
   if (!INTENTS.includes(intent)) throw new Error(`invalid intent "${obj.intent}"`);
   if (!Number.isFinite(score)) throw new Error('invalid sentiment_score');
   if (!/^[a-z]{2,3}$/.test(language)) throw new Error(`invalid language "${obj.language}"`);
-  return { language, sentiment, intent, sentimentScore: Math.max(-1, Math.min(1, score)) };
+  // Tolerant: an older or terse reply without a lead score still classifies.
+  const lead = Math.round(Number(obj.lead_score));
+  const leadScore = obj.lead_score == null || !Number.isFinite(lead) ? null : Math.max(0, Math.min(100, lead));
+  return { language, sentiment, intent, sentimentScore: Math.max(-1, Math.min(1, score)), leadScore };
 }
 
 export async function classify(cfg: AiConfig, i: InteractionForAI): Promise<{ result: Classification; usage: Usage }> {
-  const { text, usage } = await complete(cfg, cfg.classifyModel, CLASSIFY_SYSTEM, describe(i), 200);
+  const { text, usage } = await complete(cfg, cfg.classifyModel, CLASSIFY_SYSTEM, describe(i), 220);
   return { result: parseClassification(parseJsonObject(text)), usage };
 }
 

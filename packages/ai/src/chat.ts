@@ -46,6 +46,12 @@ HOW TO START
 3. Reviews are imported and labelled. This part is free and needs no plan.
 4. Choose a plan under Billing to draft replies with AI. In the Inbox press "Draft a reply", edit if needed, then "Approve and post".
 Brand voice (tone, Arabic style notes, phrases never to use, signature) can be set so drafts sound like the store.
+
+OTHER SCREENS IN THE APP
+- Inbox: reviews, comments and messages in one list, filtered by channel or by what still needs a reply.
+- Comments: for Instagram, Facebook, TikTok and WhatsApp, which are not connected directly yet, the owner can paste a customer's comment or message by hand. Eqence reads it, scores the buying intent and drafts a reply; the owner copies that reply and sends it on the platform themselves.
+- Leads: customers whose messages show intent to buy, each with an AI score from 0 to 100, a stage the owner sets (new, contacted, qualified, won, lost) and a CSV export.
+- Customers: one record per customer with their full history and the replies sent, plus the owner's own notes, tags, email and phone.
 Visitors can also try a sample review in the "Try it now" box on this page without an account.
 
 PLANS AND PRICES (US dollars)
@@ -56,10 +62,11 @@ ACCOUNT AND DATA
 On the Account page a user can see where they are signed in, sign out other devices, change password, download all their data, or delete the account. Review text is sent to an AI provider to be analysed and answered and is not used to train AI models. Details are in the Privacy Policy and Terms linked in the page footer.
 
 NOT AVAILABLE TODAY (say so plainly if asked)
-- Google reviews, Facebook, Instagram, TikTok, WhatsApp, Trustpilot or any source other than Judge.me on Shopify.
+- Automatic connection to Google reviews, Facebook, Instagram, TikTok, WhatsApp or Trustpilot. Only Judge.me on Shopify is connected automatically; comments from social platforms can be added by hand on the Comments screen.
+- Posting replies to social platforms. Eqence posts replies only to Judge.me; replies to hand-added comments are copied for the owner to send.
 - Fully automatic replies without approval.
 - A Shopify App Store listing or one-click install.
-- Analytics dashboards, CRM, lead lists, team seats.
+- Analytics dashboards and team seats (one login per account).
 - A mobile app.
 The website is in English, Arabic and Japanese; the signed-in app screens are in English.
 PLANNED, WITH NO DATE: Instagram and Facebook comments and messages; Auto-DM sequences that send (the builder exists, but nothing is sent yet).

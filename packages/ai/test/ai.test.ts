@@ -27,7 +27,7 @@ test('classify via Anthropic: request shape, parsing and usage', async () => {
   assert.equal(calls[0].headers['x-api-key'], 'k');
   assert.equal(calls[0].body.model, 'm-classify');
   assert.match(calls[0].body.messages[0].content, /Star rating: 1\/5/);
-  assert.deepEqual(result, { language: 'ar', sentiment: 'negative', sentimentScore: -0.8, intent: 'complaint' });
+  assert.deepEqual(result, { language: 'ar', sentiment: 'negative', sentimentScore: -0.8, intent: 'complaint', leadScore: null });
   assert.deepEqual(usage, { model: 'm-classify', tokensIn: 11, tokensOut: 7 });
 });
 
@@ -45,6 +45,8 @@ test('classification output is validated, not trusted', () => {
   assert.throws(() => parseClassification({ language: 'ar', sentiment: 'negative', sentiment_score: 'x', intent: 'complaint' }), /sentiment_score/);
   assert.throws(() => parseClassification({ language: 'arabic language', sentiment: 'negative', sentiment_score: -1, intent: 'complaint' }), /language/);
   assert.equal(parseClassification({ language: 'en-US', sentiment: 'mixed', sentiment_score: 5, intent: 'other' }).sentimentScore, 1);
+  const lead = (v: unknown) => parseClassification({ language: 'en', sentiment: 'positive', sentiment_score: 0.5, intent: 'purchase_intent', lead_score: v }).leadScore;
+  assert.deepEqual([lead(92), lead('88'), lead(140), lead(-3), lead(71.6), lead('high'), lead(undefined)], [92, 88, 100, 0, 72, null, null]);
 });
 
 test('parseJsonObject tolerates code fences and prose', () => {

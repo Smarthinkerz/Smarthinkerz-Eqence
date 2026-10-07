@@ -29,6 +29,13 @@
       "when": 1791369892680,
       "tag": "0003_c2c_parity",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791398714203,
+      "tag": "0004_crm",
+      "breakpoints": true
     }
   ]
 }
