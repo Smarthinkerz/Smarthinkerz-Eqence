@@ -31,9 +31,11 @@ export async function tick(pool: pg.Pool, handlers: Record<string, Handler>): Pr
         const attempts = row.attempts + 1;
         const message = err instanceof Error ? err.message : String(err);
         await client.query(
-          `update outbox set attempts = $2, last_error = $3,
-                  status = case when $2 >= $4 then 'dead' else 'pending' end,
-                  run_after = now() + make_interval(secs => $5)
+          // Explicit casts: $2 is used both as a value and in a comparison, and Postgres
+          // refuses to guess one type for it.
+          `update outbox set attempts = $2::int, last_error = $3,
+                  status = case when $2::int >= $4::int then 'dead' else 'pending' end,
+                  run_after = now() + make_interval(secs => $5::int)
             where id = $1`,
           [row.id, attempts, message.slice(0, 2000), MAX_ATTEMPTS, backoffSeconds(attempts)]);
         console.error(`outbox ${row.id} (${row.topic}) attempt ${attempts} failed: ${message}`);
