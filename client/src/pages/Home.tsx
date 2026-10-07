@@ -5,6 +5,7 @@ import { useI18n } from '../contexts/I18nContext';
 import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
 import DemoChat from '../components/DemoChat';
+import SiteChat from '../components/SiteChat';
 
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
@@ -293,6 +294,7 @@ export default function Home() {
 
       {/* Footer */}
       <SiteFooter />
+      <SiteChat />
     </div>
   );
 }

@@ -213,3 +213,5 @@ export async function demoReply(cfg: AiConfig, message: string): Promise<{ resul
   const { text, usage } = await complete(cfg, cfg.classifyModel, DEMO_SYSTEM, `Customer text:\n"""\n${message}\n"""`, 300);
   return { result: parseDemo(parseJsonObject(text)), usage };
 }
+
+export * from './chat';

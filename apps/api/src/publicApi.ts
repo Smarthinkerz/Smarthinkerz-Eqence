@@ -1,8 +1,8 @@
 // Public endpoints carried over from C2C: the landing-page demo and the API-key ping.
 // Neither needs a session. The demo is rate limited per address and, unlike C2C's,
 // never fetches a URL the visitor types (that was an SSRF risk).
-import { demoReply } from '@eqence/ai';
-import { aiConfigFromEnv, apiSecretMatches, parseApiKey } from '@eqence/core';
+import { chatReply, chatSystemPrompt, cleanChatMessages, demoReply } from '@eqence/ai';
+import { activeLadder, aiConfigFromEnv, apiSecretMatches, parseApiKey } from '@eqence/core';
 import { apiKeys } from '@eqence/db';
 import { and, eq } from 'drizzle-orm';
 import type { Hono } from 'hono';
@@ -21,6 +21,28 @@ export function mountPublicApi(app: Hono<any>) {
     if (!(await withinLimit('api_key_min', k.keyId, 60, k.ratePerMin))) return c.json({ error: 'rate limit reached for this key' }, 429);
     await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, k.id));
     return c.json({ ok: true, keyId: k.keyId, scopes: k.scopes, time: new Date().toISOString() });
+  });
+
+  // The front-page assistant: answers questions about Eqence from a fixed fact sheet
+  // (packages/ai/src/chat.ts). It holds no account data and stores nothing.
+  app.post('/api/chat', bodyLimit({ maxSize: 16 * 1024 }), async (c) => {
+    const ip = clientIp(c);
+    const cfg = aiConfigFromEnv();
+    if (!cfg.apiKey) return c.json({ error: 'the assistant is not available right now' }, 503);
+    const b = await c.req.json().catch(() => ({})) as { messages?: unknown };
+    const messages = cleanChatMessages(b.messages);
+    if (!messages) return c.json({ error: 'ask a question first' }, 400);
+    if (!(await withinLimit('site_chat_min', ip, 60, 6))) return c.json({ error: 'Please slow down and try again in a minute.' }, 429);
+    if (!(await withinLimit('site_chat_hr', ip, 3600, 40))) return c.json({ error: 'You have reached the limit for this hour. Email reply@smarthinkerz.com and we will help.' }, 429);
+    if (!(await withinLimit('site_chat_day', 'all', 86400, Number(process.env.CHAT_DAILY_CAP) || 3000))) return c.json({ error: 'The assistant is busy today. Email reply@smarthinkerz.com and we will help.' }, 429);
+    try {
+      const { text } = await chatReply(cfg, chatSystemPrompt(activeLadder()), messages);
+      if (!text) throw new Error('empty reply');
+      return c.json({ reply: text.slice(0, 2000) });
+    } catch (err) {
+      console.error('chat failed', err instanceof Error ? err.message : err);
+      return c.json({ error: 'the assistant could not answer just now, please try again' }, 502);
+    }
   });
 
   app.post('/api/demo-chat', bodyLimit({ maxSize: 4096 }), async (c) => {
