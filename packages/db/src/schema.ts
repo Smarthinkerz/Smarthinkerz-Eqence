@@ -247,6 +247,54 @@ export const auditLog = pgTable('audit_log', {
   createdAt: createdAt(),
 }, (t) => [index('audit_log_tenant_created_idx').on(t.tenantId, t.createdAt)]);
 
+/* ───────────── Carried over from Comment to Customer ───────────── */
+
+// An address an admin has blocked. Checked on every request (apps/api/src/security.ts).
+export const ipBans = pgTable('ip_bans', {
+  ip: text('ip').primaryKey(),
+  reason: text('reason'),
+  bannedUntil: timestamp('banned_until', { withTimezone: true }).notNull(),
+  bannedBy: text('banned_by').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+}, (t) => [index('ip_bans_until_idx').on(t.bannedUntil)]);
+
+// Fixed-window counters for rate limits that must hold across restarts (demo chat, API keys).
+export const rateCounters = pgTable('rate_counters', {
+  bucket: text('bucket').notNull(),
+  key: text('key').notNull(),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull().defaultNow(),
+  count: integer('count').notNull().default(0),
+}, (t) => [uniqueIndex('rate_counters_bucket_key_idx').on(t.bucket, t.key)]);
+
+// API keys issued by an admin. Only a hash of the secret is stored; the key is shown once.
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  keyId: text('key_id').notNull().unique(),
+  keyHash: text('key_hash').notNull(),
+  label: text('label'),
+  scopes: text('scopes').array().notNull().default([]),
+  ipAllowlist: text('ip_allowlist').array().notNull().default([]),
+  ratePerMin: integer('rate_per_min').notNull().default(60),
+  revoked: boolean('revoked').notNull().default(false),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index('api_keys_user_idx').on(t.userId)]);
+
+// Auto-DM sequence builder: a trigger (buying-intent score and keywords) and timed
+// messages. As in C2C these are saved definitions; sending needs a messaging channel.
+export const sequences = pgTable('sequences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  triggerIntent: integer('trigger_intent').notNull().default(70),   // 0..100
+  triggerKeywords: text('trigger_keywords').notNull().default(''),
+  steps: jsonb('steps').notNull(),                                  // [{ delayMinutes, body }]
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (t) => [index('sequences_tenant_idx').on(t.tenantId)]);
+
 /* ───────────── Site content and blog (admin CMS) ───────────── */
 
 // Front-page text overrides: one row per (key, language). Keys are the site's i18n keys,

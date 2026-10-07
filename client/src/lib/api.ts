@@ -20,7 +20,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
 }
 
 export interface Me {
-  user: { id: string; name: string; email: string; emailVerified: boolean; role: string; isSuperUser: boolean; twoFactorEnabled: boolean };
+  user: { id: string; name: string; email: string; emailVerified: boolean; role: string; isSuperUser: boolean; twoFactorEnabled: boolean; viewAs?: string | null };
   tenant?: { id: string; name: string; plan: string | null; planStatus: string; planCycle: string | null; planExpiresAt: string | null };
 }
 

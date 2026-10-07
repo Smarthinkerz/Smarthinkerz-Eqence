@@ -25,6 +25,8 @@ export const env = {
   webUrl: optional('WEB_URL', 'https://www.eqence.com'),
   // Cookie domain shared by eqence.com and api.eqence.com. Empty = host-only (local dev).
   cookieDomain: optional('COOKIE_DOMAIN', '.eqence.com'),
+  // Limits on sign-in, sign-up and reset attempts per address. On unless set to 'off' (test runs only).
+  authRateLimit: optional('AUTH_RATE_LIMIT', 'on') !== 'off',
   resendApiKey: optional('RESEND_API_KEY'),
   emailFrom: optional('EMAIL_FROM', 'Eqence <noreply@smarthinkerz.com>'),
   emailReplyTo: optional('EMAIL_REPLY_TO', 'reply@smarthinkerz.com'),

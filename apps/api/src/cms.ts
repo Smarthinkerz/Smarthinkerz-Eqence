@@ -15,6 +15,7 @@ import { auditLog, blogPosts, siteContent } from '@eqence/db';
 import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import type { Context, Hono, Next } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { mountAdminOps } from './adminOps';
 import { mountAdminUsers } from './adminUsers';
 import { db } from './db';
 import { env } from './env';
@@ -80,6 +81,7 @@ export function mountCms(app: Hono<any>) {
   /* ── admin (session required by the /api/v1 middleware, then admin role) ── */
   app.use('/api/v1/admin/*', requireAdmin);
   mountAdminUsers(app);
+  mountAdminOps(app);
 
   // Admin dashboard: counts only, no personal data.
   app.get('/api/v1/admin/overview', async (c) => {

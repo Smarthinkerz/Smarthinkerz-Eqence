@@ -28,6 +28,8 @@ export const auth = betterAuth({
   // Authenticator-app codes. Admin routes require it (apps/api/src/cms.ts requireAdmin).
   plugins: [twoFactor({ issuer: 'Eqence', accountLockout: { enabled: true, maxFailedAttempts: 5, durationSeconds: 900 } })],
   trustedOrigins: env.webOrigins,
+  // Limits on the auth endpoints themselves (sign-in, sign-up, reset), per client address.
+  rateLimit: { enabled: env.authRateLimit, window: 60, max: 100 },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,

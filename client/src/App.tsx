@@ -11,6 +11,9 @@ import Billing, { BillingReturn } from "./pages/app/Billing";
 import AdminContent from "./pages/app/AdminContent";
 import AdminDashboard from "./pages/app/AdminDashboard";
 import AdminUsers from "./pages/app/AdminUsers";
+import { AdminAudit, AdminSecurity, AdminSystem } from "./pages/app/AdminOps";
+import Account from "./pages/app/Account";
+import Sequences from "./pages/app/Sequences";
 import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
 import Blog, { BlogPost } from "./pages/Blog";
 import Legal from "./pages/Legal";
@@ -34,12 +37,17 @@ function Router() {
       <Route path="/app/reset-password" component={ResetPassword} />
       <Route path="/app/connections" component={Connections} />
       <Route path="/app/brand-voice" component={BrandVoice} />
+      <Route path="/app/sequences" component={Sequences} />
+      <Route path="/app/account" component={Account} />
       <Route path="/app/billing" component={Billing} />
       <Route path="/app/billing/return" component={BillingReturn} />
       <Route path="/app/admin" component={AdminDashboard} />
       <Route path="/app/admin/content" component={AdminContent} />
       <Route path="/app/admin/blog" component={AdminBlog} />
       <Route path="/app/admin/users" component={AdminUsers} />
+      <Route path="/app/admin/audit" component={AdminAudit} />
+      <Route path="/app/admin/security" component={AdminSecurity} />
+      <Route path="/app/admin/system" component={AdminSystem} />
       <Route path="/app/admin/blog/:id" component={AdminBlogEdit} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />

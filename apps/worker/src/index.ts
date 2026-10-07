@@ -30,6 +30,18 @@ async function loop() {
   }
 }
 
+// Housekeeping, hourly (C2C's maintenance cron): drop what has expired.
+async function maintain() {
+  for (const q of [
+    `delete from session where expires_at < now()`,
+    `delete from verification where expires_at < now() - interval '1 day'`,
+    `delete from ip_bans where banned_until < now()`,
+    `delete from rate_counters where window_start < now() - interval '1 day'`,
+  ]) await pool.query(q).catch((err) => console.error('maintenance failed:', err instanceof Error ? err.message : err));
+}
+const maintenance = setInterval(maintain, 3600_000);
+maintain();
+
 const health = createServer((_req, res) => {
   const fresh = Date.now() - lastTickAt < 30_000;
   res.writeHead(fresh ? 200 : 503, { 'Content-Type': 'application/json' });
@@ -38,6 +50,7 @@ const health = createServer((_req, res) => {
 
 process.on('SIGTERM', () => {
   stopping = true;
+  clearInterval(maintenance);
   health.close();
   setTimeout(() => pool.end().finally(() => process.exit(0)), 3000);
 });

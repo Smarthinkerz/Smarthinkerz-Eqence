@@ -4,6 +4,7 @@ import { Link } from 'wouter';
 import { useI18n } from '../contexts/I18nContext';
 import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
+import DemoChat from '../components/DemoChat';
 
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
@@ -239,6 +240,8 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
+      <DemoChat />
+
       <section id="pricing" className="section-padding bg-gray-50">
         <div className="container">
           <div className="text-center max-w-2xl mx-auto mb-16">

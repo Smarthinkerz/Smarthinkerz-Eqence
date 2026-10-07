@@ -79,12 +79,18 @@ export function monthStart(now = new Date()) {
 
 /** Billable AI actions allowed this month for a tenant; -1 = unlimited, 0 = none. */
 export async function quotaFor(db: Db, tenantId: string): Promise<{ limit: number; used: number }> {
-  const [t] = await db.select({ plan: tenants.plan, status: tenants.planStatus, expires: tenants.planExpiresAt, super: user.isSuperUser })
+  const [t] = await db.select({ plan: tenants.plan, status: tenants.planStatus, expires: tenants.planExpiresAt, super: user.isSuperUser, viewAs: user.effectivePlan })
     .from(tenants).innerJoin(user, eq(user.id, tenants.ownerUserId)).where(eq(tenants.id, tenantId));
   if (!t) throw new NotAllowed('unknown tenant');
   const [{ used }] = await db.select({ used: sql<number>`count(*)::int` }).from(aiActions)
     .where(and(eq(aiActions.tenantId, tenantId), eq(aiActions.billable, true), gte(aiActions.createdAt, monthStart())));
-  if (t.super) return { limit: -1, used };
+  // A super user is unlimited, unless they chose to view the product as a plan (or as no plan).
+  if (t.super) {
+    // Anything that is not a current plan (including tier names carried from C2C) means unlimited.
+    if (t.viewAs === 'none') return { limit: 0, used };
+    const viewed = planBySlug(t.viewAs);
+    return { limit: viewed ? viewed.aiActionsPerMonth : -1, used };
+  }
   const active = t.status === 'active' && (!t.expires || t.expires.getTime() > Date.now());
   const plan = active ? planBySlug(t.plan) : undefined;
   return { limit: plan ? plan.aiActionsPerMonth : 0, used };
