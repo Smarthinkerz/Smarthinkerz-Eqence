@@ -178,11 +178,12 @@ const BLOG_PROMPTS: Record<BlogAiAction, (topic: string, text: string, length: B
 };
 
 // Translating or improving returns about as much text as it was given, so the room it gets
-// follows the input: roughly one token per two characters (Arabic output is the heavy case),
-// never less than before and capped so a request cannot run away.
+// follows the input: one token per character, because Arabic output is the heavy case (a
+// 3,264-word English post needed more than 9,900 tokens in Arabic). Never less than before,
+// and capped so a request cannot run away.
 const REWORK: BlogAiAction[] = ['translate_ar', 'translate_en', 'improve'];
 export function reworkTokens(text: string): number {
-  return Math.min(16000, Math.max(3000, Math.ceil(text.length / 2)));
+  return Math.min(28000, Math.max(3000, text.length));
 }
 // A result that hit the limit is refused, never returned as if it were complete.
 const CUT_SHORT = 'the result was too long and was cut off before the end; try again with a shorter text';

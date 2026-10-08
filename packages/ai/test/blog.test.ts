@@ -47,11 +47,11 @@ test('length only changes full posts, and an unknown length is refused', async (
 test('translate and improve get room in proportion to the text; nothing cut off is passed on as complete', async () => {
   const { reworkTokens } = await import('../src/index');
   assert.equal(reworkTokens('short text'), 3000, 'never less than before');
-  assert.equal(reworkTokens('x'.repeat(22000)), 11000, 'a 3,500 word post gets room for its Arabic');
-  assert.equal(reworkTokens('x'.repeat(60000)), 16000, 'capped');
+  assert.equal(reworkTokens('x'.repeat(22000)), 22000, 'a 3,500 word post gets room for its Arabic');
+  assert.equal(reworkTokens('x'.repeat(60000)), 28000, 'capped');
   const { cfg, sent } = provider('anthropic');
   await blogAssist(cfg, 'translate_ar', '', 'x'.repeat(22000));
-  assert.equal(sent[0].max_tokens, 11000);
+  assert.equal(sent[0].max_tokens, 22000);
   await blogAssist(cfg, 'improve', '', 'x'.repeat(100));
   assert.equal(sent[1].max_tokens, 3000);
 
