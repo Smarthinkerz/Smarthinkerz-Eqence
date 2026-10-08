@@ -20,7 +20,9 @@ const pricingPlans = [
 ];
 
 export default function Home() {
-  const { t } = useI18n();
+  const { t, setting } = useI18n();
+  // Admin → Front page → Home page: 'off' replaces both background videos with a plain background.
+  const videosOff = setting('home.videos').toLowerCase() === 'off';
   const planFeatures = (plan: (typeof pricingPlans)[number]) => [
     `${plan.replies === -1 ? t('pricing.unlimited') : plan.replies.toLocaleString()} ${t('pricing.f.replies')}`,
     `${plan.sources === -1 ? t('pricing.unlimited') : plan.sources} ${t(plan.sources === 1 ? 'pricing.f.source' : 'pricing.f.sources')}`,
@@ -111,34 +113,38 @@ export default function Home() {
       {/* Silent hero product motion supplied by the user, with foreground content retained above it. */}
       <section
         aria-label="Eqence product experience"
-        className="relative mt-16 min-h-[28rem] overflow-hidden bg-slate-700 sm:min-h-[calc(100svh-4rem)]"
+        className={`relative mt-16 min-h-[28rem] overflow-hidden sm:min-h-[calc(100svh-4rem)] ${videosOff ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-[#5a0f1c]' : 'bg-slate-700'}`}
       >
-        <video
-          ref={heroVideoRef}
-          id="hero-background-video"
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/media/eqence-hero-poster.jpg"
-          preload="auto"
-          aria-hidden="true"
-          tabIndex={-1}
-        >
-          <source src={HERO_BACKGROUND_VIDEO_URL} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-100/26 via-slate-200/12 to-slate-100/18" />
-        <button
-          type="button"
-          onClick={() => toggleBackgroundVideo('hero', heroVideoRef.current, setIsHeroVideoPlaying)}
-          aria-label={isHeroVideoPlaying ? 'Pause hero background video' : 'Play hero background video'}
-          title={isHeroVideoPlaying ? 'Pause background video' : 'Play background video'}
-          className="absolute bottom-5 left-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-slate-950/65 text-sm text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-950/85 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-700"
-        >
-          <span aria-hidden="true">{isHeroVideoPlaying ? 'Ⅱ' : '▶'}</span>
-          <span className="sr-only">{isHeroVideoPlaying ? 'Pause' : 'Play'} hero background video</span>
-        </button>
+        {!videosOff && (
+          <>
+            <video
+              ref={heroVideoRef}
+              id="hero-background-video"
+              className="absolute inset-0 h-full w-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster="/media/eqence-hero-poster.jpg"
+              preload="auto"
+              aria-hidden="true"
+              tabIndex={-1}
+            >
+              <source src={HERO_BACKGROUND_VIDEO_URL} type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-100/26 via-slate-200/12 to-slate-100/18" />
+            <button
+              type="button"
+              onClick={() => toggleBackgroundVideo('hero', heroVideoRef.current, setIsHeroVideoPlaying)}
+              aria-label={isHeroVideoPlaying ? 'Pause hero background video' : 'Play hero background video'}
+              title={isHeroVideoPlaying ? 'Pause background video' : 'Play background video'}
+              className="absolute bottom-5 left-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-slate-950/65 text-sm text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-950/85 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-700"
+            >
+              <span aria-hidden="true">{isHeroVideoPlaying ? 'Ⅱ' : '▶'}</span>
+              <span className="sr-only">{isHeroVideoPlaying ? 'Pause' : 'Play'} hero background video</span>
+            </button>
+          </>
+        )}
         <div className="container relative z-10 flex min-h-[28rem] items-center justify-center py-20 sm:min-h-[calc(100svh-4rem)] sm:py-28">
           <div className="max-w-4xl text-center text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-white shadow-lg backdrop-blur-sm animate-fade-in">
@@ -190,32 +196,36 @@ export default function Home() {
 
       {/* How It Works */}
       <section id="how-it-works" className="relative isolate overflow-hidden bg-slate-100 py-20 sm:py-24 lg:py-28">
-        <video
-          ref={howItWorksVideoRef}
-          id="how-it-works-background-video"
-          className="absolute inset-0 -z-20 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/media/eqence-how-it-works-poster.jpg"
-          preload="auto"
-          aria-hidden="true"
-          tabIndex={-1}
-        >
-          <source src={HOW_IT_WORKS_BACKGROUND_VIDEO_URL} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/42 via-white/20 to-white/46" />
-        <button
-          type="button"
-          onClick={() => toggleBackgroundVideo('how-it-works', howItWorksVideoRef.current, setIsHowItWorksVideoPlaying)}
-          aria-label={isHowItWorksVideoPlaying ? 'Pause How It Works background video' : 'Play How It Works background video'}
-          title={isHowItWorksVideoPlaying ? 'Pause background video' : 'Play background video'}
-          className="absolute right-5 bottom-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#C41E3A]/25 bg-white/85 text-sm text-[#C41E3A] shadow-lg backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#C41E3A] focus:ring-offset-2 focus:ring-offset-white"
-        >
-          <span aria-hidden="true">{isHowItWorksVideoPlaying ? 'Ⅱ' : '▶'}</span>
-          <span className="sr-only">{isHowItWorksVideoPlaying ? 'Pause' : 'Play'} How It Works background video</span>
-        </button>
+        {!videosOff && (
+          <>
+            <video
+              ref={howItWorksVideoRef}
+              id="how-it-works-background-video"
+              className="absolute inset-0 -z-20 h-full w-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster="/media/eqence-how-it-works-poster.jpg"
+              preload="auto"
+              aria-hidden="true"
+              tabIndex={-1}
+            >
+              <source src={HOW_IT_WORKS_BACKGROUND_VIDEO_URL} type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/42 via-white/20 to-white/46" />
+            <button
+              type="button"
+              onClick={() => toggleBackgroundVideo('how-it-works', howItWorksVideoRef.current, setIsHowItWorksVideoPlaying)}
+              aria-label={isHowItWorksVideoPlaying ? 'Pause How It Works background video' : 'Play How It Works background video'}
+              title={isHowItWorksVideoPlaying ? 'Pause background video' : 'Play background video'}
+              className="absolute right-5 bottom-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#C41E3A]/25 bg-white/85 text-sm text-[#C41E3A] shadow-lg backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#C41E3A] focus:ring-offset-2 focus:ring-offset-white"
+            >
+              <span aria-hidden="true">{isHowItWorksVideoPlaying ? 'Ⅱ' : '▶'}</span>
+              <span className="sr-only">{isHowItWorksVideoPlaying ? 'Pause' : 'Play'} How It Works background video</span>
+            </button>
+          </>
+        )}
         <div className="container relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#C41E3A] mb-4">{t('howit.title')}</h2>

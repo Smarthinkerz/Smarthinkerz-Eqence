@@ -9,6 +9,7 @@ import { AdminTabs } from './AdminBlog';
 
 const GROUPS: { title: string; page: string; keys: string[] }[] = [
   { title: 'Navigation', page: '/', keys: ['nav.features', 'nav.pricing', 'nav.blog', 'nav.login', 'nav.register'] },
+  { title: 'Home page settings', page: '/', keys: ['home.videos'] },
   { title: 'Hero', page: '/', keys: ['hero.badge', 'hero.title', 'hero.subtitle', 'hero.cta'] },
   {
     title: 'Features', page: '/#features', keys: ['features.title', 'features.subtitle',
@@ -92,7 +93,17 @@ function Body() {
                   <label htmlFor={id} className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                     <code>{k}</code>{saved[id] && <span className="rounded bg-amber-50 px-1.5 text-amber-800">edited</span>}
                   </label>
-                  {legal ? (
+                  {k === 'home.videos' ? (
+                    <div>
+                      <select id={id} value={v.toLowerCase() === 'off' ? 'off' : 'on'} disabled={lang !== 'en'}
+                        onChange={(e) => setDraft((d) => ({ ...d, [id]: e.target.value === 'off' ? 'off' : '' }))}
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#C41E3A] outline-none disabled:opacity-50">
+                        <option value="on">Background videos: shown</option>
+                        <option value="off">Background videos: hidden (plain background)</option>
+                      </select>
+                      <p className="mt-1 text-xs text-gray-500">{lang === 'en' ? 'Applies to the home page in every language. The moving backgrounds behind the headline and behind How It Works.' : 'This setting is the same for every language. Change it on the English tab.'}</p>
+                    </div>
+                  ) : legal ? (
                     <MarkdownEditor id={id} dir={rtl ? 'rtl' : 'ltr'} value={v} maxLength={60000} rows={20}
                       placeholder="Paste or write the full text here. Use the toolbar for titles, bold and bullet points."
                       onChange={(nv) => setDraft((d) => ({ ...d, [id]: nv }))} />

@@ -10,6 +10,8 @@ interface I18nContextType {
   isLoading: boolean;
   /** Re-reads the admin's content overrides (after saving in the editor). */
   reloadContent: () => void;
+  /** A site-wide setting saved in the admin (English tab), the same for every language. Empty when unset. */
+  setting: (key: string) => string;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -393,6 +395,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('eqence_lang_manual', 'true');
   }, []);
 
+  const setting = useCallback((key: string): string => (overrides.en?.[key] ?? '').trim(), [overrides]);
+
   const t = useCallback((key: string): string => {
     // Admin-edited text wins, then the hand-crafted translations
     if (overrides[language]?.[key]) return overrides[language][key];
@@ -408,7 +412,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [language, autoTranslations, overrides]);
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t, isLoading, reloadContent }}>
+    <I18nContext.Provider value={{ language, setLanguage, t, isLoading, reloadContent, setting }}>
       {children}
     </I18nContext.Provider>
   );
