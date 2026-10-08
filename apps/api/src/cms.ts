@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { aiConfigFromEnv } from '@eqence/core';
-import { blogAssist, type BlogAiAction } from '@eqence/ai';
+import { blogAssist, BLOG_LENGTHS, type BlogAiAction, type BlogLength } from '@eqence/ai';
 import {
   cleanBlogInput, CONTENT_LANGS, contentMax, MAX_IMAGE_BYTES, slugify, sniffImage, uniqueSlug, validContentKey,
 } from '@eqence/core';
@@ -204,13 +204,16 @@ export function mountCms(app: Hono<any>) {
 
   const ACTIONS: BlogAiAction[] = ['titles', 'outline', 'full_post', 'excerpt', 'seo', 'translate_ar', 'translate_en', 'improve'];
   app.post('/api/v1/admin/blog-ai', async (c) => {
-    const b = await c.req.json().catch(() => ({})) as { action?: string; topic?: string; text?: string };
+    const b = await c.req.json().catch(() => ({})) as { action?: string; topic?: string; text?: string; length?: string };
     if (!ACTIONS.includes(b.action as BlogAiAction)) return c.json({ error: 'unknown action' }, 400);
+    // Full posts come in three sizes: short (about 600 words), medium (about 1,500), long (up to 3,500).
+    const length = (b.length ?? 'short') as BlogLength;
+    if (!Object.hasOwn(BLOG_LENGTHS, length)) return c.json({ error: 'length must be short, medium or long' }, 400);
     const topic = String(b.topic ?? '').slice(0, 500);
     const text = String(b.text ?? '').slice(0, 30000);
     try {
-      const out = await blogAssist(aiConfigFromEnv(), b.action as BlogAiAction, topic, text);
-      await db.insert(auditLog).values({ actorUserId: userOf(c).id, action: 'cms.blog_ai', detail: { action: b.action, model: out.usage.model, tokensIn: out.usage.tokensIn, tokensOut: out.usage.tokensOut } });
+      const out = await blogAssist(aiConfigFromEnv(), b.action as BlogAiAction, topic, text, length);
+      await db.insert(auditLog).values({ actorUserId: userOf(c).id, action: 'cms.blog_ai', detail: { action: b.action, ...(b.action === 'full_post' ? { length } : {}), model: out.usage.model, tokensIn: out.usage.tokensIn, tokensOut: out.usage.tokensOut } });
       return c.json({ text: out.text });
     } catch (e) {
       return c.json({ error: (e as Error).message.slice(0, 300) }, 400);

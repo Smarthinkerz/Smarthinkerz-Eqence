@@ -72,6 +72,7 @@ function EditBody() {
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [topic, setTopic] = useState('');
+  const [length, setLength] = useState<'short' | 'medium' | 'long'>('short');
   const [aiOut, setAiOut] = useState('');
 
   useEffect(() => {
@@ -115,7 +116,7 @@ function EditBody() {
   async function ai(action: string, text = '') {
     setBusy(action); setMsg(null);
     try {
-      const r = await api<{ text: string }>('/api/v1/admin/blog-ai', { method: 'POST', body: { action, topic: topic || post!.titleEn, text } });
+      const r = await api<{ text: string }>('/api/v1/admin/blog-ai', { method: 'POST', body: { action, topic: topic || post!.titleEn, text, length } });
       return r.text;
     } catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : 'AI request failed' }); return null; }
     finally { setBusy(''); }
@@ -202,7 +203,15 @@ function EditBody() {
             <div className="flex flex-wrap gap-2">
               <button className={btn} disabled={!!busy} onClick={async () => { const t = await ai('titles'); if (t) setAiOut(t); }}>Title ideas</button>
               <button className={btn} disabled={!!busy} onClick={async () => { const t = await ai('outline'); if (t) setAiOut(t); }}>Outline</button>
-              <button className={btn} disabled={!!busy} onClick={async () => { const t = await ai('full_post', aiOut); if (t) setAiOut(t); }}>Write full post</button>
+              <span className="inline-flex items-center gap-1">
+                <button className={btn} disabled={!!busy} onClick={async () => { const t = await ai('full_post', aiOut); if (t) setAiOut(t); }}>Write full post</button>
+                <select aria-label="Post length" value={length} onChange={(e) => setLength(e.target.value as typeof length)} disabled={!!busy}
+                  className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm">
+                  <option value="short">Short, about 600 words</option>
+                  <option value="medium">Medium, about 1,500 words</option>
+                  <option value="long">Long, up to 3,500 words</option>
+                </select>
+              </span>
               <button className={btn} disabled={!!busy} onClick={async () => { const t = await ai('excerpt', post.bodyEn ?? ''); if (t) setPost({ ...post, excerptEn: t }); }}>Write excerpt</button>
               <button className={btn} disabled={!!busy} onClick={async () => {
                 const t = await ai('seo', post.bodyEn ?? ''); if (!t) return;
@@ -210,7 +219,8 @@ function EditBody() {
               }}>SEO fields</button>
               <button className={btn} disabled={!!busy || !(post.bodyEn ?? '').trim()} onClick={async () => { const t = await ai('improve', post.bodyEn ?? ''); if (t) setAiOut(t); }}>Improve body</button>
             </div>
-            {busy && !['save', 'upload'].includes(busy) && <p role="status" className="text-sm text-gray-500">Working…</p>}
+            {busy && !['save', 'upload'].includes(busy) && <p role="status" className="text-sm text-gray-500">{busy === 'full_post' ? (length === 'long' ? 'Writing a long post. This can take two to three minutes; keep this page open.' : length === 'medium' ? 'Writing. This can take up to a minute.' : 'Writing…') : 'Working…'}</p>}
+            {aiOut && <p className="text-xs text-gray-500">{aiOut.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words</p>}
             {aiOut && (
               <div className="space-y-2">
                 <textarea className={`${input} font-mono`} rows={10} value={aiOut} onChange={(e) => setAiOut(e.target.value)} />
