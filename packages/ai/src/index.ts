@@ -177,6 +177,16 @@ const BLOG_PROMPTS: Record<BlogAiAction, (topic: string, text: string, length: B
   improve: (_t, x) => `Improve this blog text: fix grammar, tighten wording and improve clarity without changing its meaning, facts or Markdown structure. Output only the improved text.\n\n${x}`,
 };
 
+// Translating or improving returns about as much text as it was given, so the room it gets
+// follows the input: roughly one token per two characters (Arabic output is the heavy case),
+// never less than before and capped so a request cannot run away.
+const REWORK: BlogAiAction[] = ['translate_ar', 'translate_en', 'improve'];
+export function reworkTokens(text: string): number {
+  return Math.min(16000, Math.max(3000, Math.ceil(text.length / 2)));
+}
+// A result that hit the limit is refused, never returned as if it were complete.
+const CUT_SHORT = 'the result was too long and was cut off before the end; try again with a shorter text';
+
 export async function blogAssist(cfg: AiConfig, action: BlogAiAction, topic: string, text: string, length: BlogLength = 'short'): Promise<{ text: string; usage: Usage }> {
   const build = BLOG_PROMPTS[action];
   if (!build) throw new Error(`unknown blog action "${action}"`);
@@ -186,7 +196,7 @@ export async function blogAssist(cfg: AiConfig, action: BlogAiAction, topic: str
   // Plain text output (not JSON), so the OpenAI path must not force json_object.
   const model = cfg.draftModel;
   if (!Object.hasOwn(BLOG_LENGTHS, length)) throw new Error(`unknown length "${length}"`);
-  const maxTokens = action === 'full_post' ? BLOG_LENGTHS[length].maxTokens : 3000;
+  const maxTokens = action === 'full_post' ? BLOG_LENGTHS[length].maxTokens : REWORK.includes(action) ? reworkTokens(text) : 3000;
   const prompt = build(topic, text, length);
   if (cfg.provider === 'anthropic') {
     const res = await f('https://api.anthropic.com/v1/messages', {
@@ -195,7 +205,8 @@ export async function blogAssist(cfg: AiConfig, action: BlogAiAction, topic: str
       body: JSON.stringify({ model, max_tokens: maxTokens, system: BLOG_SYSTEM, messages: [{ role: 'user', content: prompt }] }),
     });
     if (!res.ok) throw new Error(`Anthropic returned ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    const j = (await res.json()) as { content: Array<{ type: string; text?: string }>; usage: { input_tokens: number; output_tokens: number } };
+    const j = (await res.json()) as { content: Array<{ type: string; text?: string }>; stop_reason?: string; usage: { input_tokens: number; output_tokens: number } };
+    if (j.stop_reason === 'max_tokens') throw new Error(CUT_SHORT);
     return { text: j.content.filter((c) => c.type === 'text').map((c) => c.text).join('').trim(), usage: { model, tokensIn: j.usage.input_tokens, tokensOut: j.usage.output_tokens } };
   }
   const res = await f('https://api.openai.com/v1/chat/completions', {
@@ -204,7 +215,8 @@ export async function blogAssist(cfg: AiConfig, action: BlogAiAction, topic: str
     body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'system', content: BLOG_SYSTEM }, { role: 'user', content: prompt }] }),
   });
   if (!res.ok) throw new Error(`OpenAI returned ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const j = (await res.json()) as { choices: Array<{ message: { content: string } }>; usage: { prompt_tokens: number; completion_tokens: number } };
+  const j = (await res.json()) as { choices: Array<{ message: { content: string }; finish_reason?: string }>; usage: { prompt_tokens: number; completion_tokens: number } };
+  if (j.choices[0]?.finish_reason === 'length') throw new Error(CUT_SHORT);
   return { text: (j.choices[0]?.message.content ?? '').trim(), usage: { model, tokensIn: j.usage.prompt_tokens, tokensOut: j.usage.completion_tokens } };
 }
 

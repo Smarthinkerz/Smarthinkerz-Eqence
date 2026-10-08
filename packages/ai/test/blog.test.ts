@@ -43,3 +43,25 @@ test('length only changes full posts, and an unknown length is refused', async (
   await assert.rejects(blogAssist(cfg, 'full_post', 'A topic', '', 'epic' as BlogLength), /unknown length/);
   await assert.rejects(blogAssist(cfg, 'full_post', 'A topic', '', 'constructor' as BlogLength), /unknown length/);
 });
+
+test('translate and improve get room in proportion to the text; nothing cut off is passed on as complete', async () => {
+  const { reworkTokens } = await import('../src/index');
+  assert.equal(reworkTokens('short text'), 3000, 'never less than before');
+  assert.equal(reworkTokens('x'.repeat(22000)), 11000, 'a 3,500 word post gets room for its Arabic');
+  assert.equal(reworkTokens('x'.repeat(60000)), 16000, 'capped');
+  const { cfg, sent } = provider('anthropic');
+  await blogAssist(cfg, 'translate_ar', '', 'x'.repeat(22000));
+  assert.equal(sent[0].max_tokens, 11000);
+  await blogAssist(cfg, 'improve', '', 'x'.repeat(100));
+  assert.equal(sent[1].max_tokens, 3000);
+
+  for (const p of ['anthropic', 'openai'] as const) {
+    const cut: AiConfig = {
+      provider: p, apiKey: 'k', classifyModel: 's', draftModel: 'w',
+      fetchImpl: async () => new Response(JSON.stringify(p === 'anthropic'
+        ? { content: [{ type: 'text', text: 'Half a tran' }], stop_reason: 'max_tokens', usage: { input_tokens: 1, output_tokens: 1 } }
+        : { choices: [{ message: { content: 'Half a tran' }, finish_reason: 'length' }], usage: { prompt_tokens: 1, completion_tokens: 1 } })),
+    };
+    await assert.rejects(blogAssist(cut, 'translate_ar', '', 'some text'), /cut off before the end/);
+  }
+});
