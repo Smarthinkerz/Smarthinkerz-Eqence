@@ -11,10 +11,13 @@ export default function SiteNav() {
   const section = (id: string) => (onHome ? `#${id}` : `/#${id}`);
   const link = 'text-sm text-gray-600 hover:text-gray-900 transition-colors';
   const blogActive = location === '/blog' || location.startsWith('/blog/');
+  // Front page only: the way back to the parent site, in the middle of the bar.
+  const back = 'items-center gap-1.5 whitespace-nowrap text-sm font-medium text-gray-700 hover:text-[#C41E3A] transition-colors';
+  const arrow = <span aria-hidden className="rtl:rotate-180">←</span>;
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
-      <div className="container flex items-center justify-between h-16 gap-3">
+      <div className="container relative flex items-center justify-between h-16 gap-3">
         <div className="flex items-center gap-8 min-w-0">
           <Link href="/" className="text-2xl font-bold text-[#C41E3A]">Eqence</Link>
           <div className="hidden md:flex items-center gap-6">
@@ -24,6 +27,18 @@ export default function SiteNav() {
             <Link href="/blog" className={blogActive ? 'text-sm font-semibold text-[#C41E3A]' : link}>{t('nav.blog')}</Link>
           </div>
         </div>
+        {onHome && (
+          <>
+            {/* Wide screens: exactly centred in the bar, whatever sits left and right of it. */}
+            <a href="https://smarthinkerz.com" className={`hidden xl:inline-flex absolute left-1/2 -translate-x-1/2 ${back}`}>
+              {arrow}{t('nav.smarthinkerz')}
+            </a>
+            {/* Narrower screens: between the two groups, shortened so nothing overlaps. */}
+            <a href="https://smarthinkerz.com" aria-label={t('nav.smarthinkerz')} className={`inline-flex xl:hidden min-w-0 ${back}`}>
+              {arrow}<span className="truncate">SmarThinkerz</span>
+            </a>
+          </>
+        )}
         <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/blog" className={`md:hidden ${blogActive ? 'text-sm font-semibold text-[#C41E3A]' : link} px-1`}>{t('nav.blog')}</Link>
           <LanguageToggle />

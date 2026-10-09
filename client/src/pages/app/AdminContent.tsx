@@ -8,7 +8,7 @@ import AppShell from './AppShell';
 import { AdminTabs } from './AdminBlog';
 
 const GROUPS: { title: string; page: string; keys: string[] }[] = [
-  { title: 'Navigation', page: '/', keys: ['nav.features', 'nav.pricing', 'nav.blog', 'nav.login', 'nav.register'] },
+  { title: 'Navigation', page: '/', keys: ['nav.features', 'nav.pricing', 'nav.blog', 'nav.smarthinkerz', 'nav.login', 'nav.register'] },
   { title: 'Home page settings', page: '/', keys: ['home.videos'] },
   { title: 'Hero', page: '/', keys: ['hero.badge', 'hero.title', 'hero.subtitle', 'hero.cta'] },
   {
