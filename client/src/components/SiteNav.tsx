@@ -33,8 +33,8 @@ export default function SiteNav() {
             <a href="https://smarthinkerz.com" className={`hidden xl:inline-flex absolute left-1/2 -translate-x-1/2 ${back}`}>
               {arrow}{t('nav.smarthinkerz')}
             </a>
-            {/* Narrower screens: between the two groups, shortened so nothing overlaps. */}
-            <a href="https://smarthinkerz.com" aria-label={t('nav.smarthinkerz')} className={`inline-flex xl:hidden min-w-0 ${back}`}>
+            {/* Tablets and small laptops: between the two groups, shortened so nothing overlaps. */}
+            <a href="https://smarthinkerz.com" aria-label={t('nav.smarthinkerz')} className={`hidden sm:inline-flex xl:hidden min-w-0 ${back}`}>
               {arrow}<span className="truncate">SmarThinkerz</span>
             </a>
           </>
@@ -50,6 +50,12 @@ export default function SiteNav() {
           </Link>
         </div>
       </div>
+      {/* Phones: the bar has no room, so the link gets its own centred strip under it. */}
+      {onHome && (
+        <a href="https://smarthinkerz.com" className={`flex sm:hidden h-8 justify-center border-t border-gray-100 bg-white/95 !text-xs ${back}`}>
+          {arrow}{t('nav.smarthinkerz')}
+        </a>
+      )}
     </nav>
   );
 }
