@@ -175,6 +175,11 @@ function EditBody() {
               <h2 className="font-semibold text-gray-900">العربية (Arabic, optional)</h2>
               <button className={btn} disabled={!!busy} onClick={translateToArabic}>{busy === 'translate_ar' ? 'Translating…' : 'Translate from English with AI'}</button>
             </div>
+            {busy === 'translate_ar' && (
+              <p role="status" className="text-sm text-gray-500">
+                {(post.bodyEn ?? '').trim().split(/\s+/).length > 1000 ? 'Translating a long post. This can take two to three minutes; keep this page open.' : 'Translating. This can take up to a minute.'}
+              </p>
+            )}
             <input dir="rtl" className={input} placeholder="العنوان" value={post.titleAr ?? ''} onChange={(e) => set('titleAr', e.target.value)} maxLength={300} />
             <textarea dir="rtl" className={input} rows={2} placeholder="المقتطف" value={post.excerptAr ?? ''} onChange={(e) => set('excerptAr', e.target.value)} maxLength={600} />
             <MarkdownEditor dir="rtl" rows={12} placeholder="نص المقالة" value={post.bodyAr ?? ''} onChange={(v) => set('bodyAr', v)} />
