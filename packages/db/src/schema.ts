@@ -270,6 +270,14 @@ export const ipBans = pgTable('ip_bans', {
   createdAt: createdAt(),
 }, (t) => [index('ip_bans_until_idx').on(t.bannedUntil)]);
 
+// Addresses that asked to receive no more invitation email. Written by the public one click
+// link (apps/api/src/outreach.ts); the outreach sender reads it before every send.
+export const outreachOptouts = pgTable('outreach_optouts', {
+  email: text('email').primaryKey(),
+  method: text('method').notNull(),          // 'one_click' (mail client POST) | 'link' (person opened the link)
+  createdAt: createdAt(),
+});
+
 // Fixed-window counters for rate limits that must hold across restarts (demo chat, API keys).
 export const rateCounters = pgTable('rate_counters', {
   bucket: text('bucket').notNull(),

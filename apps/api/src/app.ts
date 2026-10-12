@@ -9,6 +9,7 @@ import { env } from './env';
 import { mountAccount } from './account';
 import { mountCms } from './cms';
 import { mountCrm } from './crm';
+import { mountOutreach } from './outreach';
 import { mountPublicApi } from './publicApi';
 import { mountRoutes } from './routes';
 import { refuseBanned } from './security';
@@ -42,6 +43,7 @@ app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw));
 
 // Key-authenticated and anonymous endpoints, registered ahead of the session check.
 mountPublicApi(app);
+mountOutreach(app);
 
 // Everything under /api/v1 needs a signed-in user.
 app.use('/api/v1/*', async (c, next) => {

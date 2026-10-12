@@ -30,6 +30,8 @@ export const env = {
   resendApiKey: optional('RESEND_API_KEY'),
   emailFrom: optional('EMAIL_FROM', 'Eqence <noreply@smarthinkerz.com>'),
   emailReplyTo: optional('EMAIL_REPLY_TO', 'reply@smarthinkerz.com'),
+  // Signs outreach unsubscribe links and guards the opt out export. Empty = both are off (503).
+  outreachSecret: optional('OUTREACH_SECRET'),
   // File storage target: 'disk' (ECS, served by nginx) or 'r2' once credentials exist.
   fileStore: optional('FILE_STORE', 'disk'),
   fileDir: optional('FILE_DIR', '/var/lib/eqence/files'),

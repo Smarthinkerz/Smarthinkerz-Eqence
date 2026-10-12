@@ -36,6 +36,13 @@
       "when": 1791398714203,
       "tag": "0004_crm",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791837562930,
+      "tag": "0005_outreach_optouts",
+      "breakpoints": true
     }
   ]
 }
