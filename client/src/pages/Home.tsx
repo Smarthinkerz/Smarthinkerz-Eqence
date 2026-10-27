@@ -19,8 +19,10 @@ const pricingPlans = [
   { id: 'enterprise', name: 'Enterprise', price: 499, replies: -1, sources: -1, popular: false },
 ];
 
-export default function Home() {
+export default function Home({ section }: { section?: string; params?: unknown } = {}) {
   const { t, setting } = useI18n();
+  // /pricing renders this page scrolled to that section.
+  useEffect(() => { if (section) document.getElementById(section)?.scrollIntoView(); }, [section]);
   // Admin → Front page → Home page: 'off' replaces both background videos with a plain background.
   const videosOff = setting('home.videos').toLowerCase() === 'off';
   const planFeatures = (plan: (typeof pricingPlans)[number]) => [

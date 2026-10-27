@@ -20,6 +20,7 @@ import Customers from "./pages/app/Customers";
 import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
 import Blog, { BlogPost } from "./pages/Blog";
 import Legal from "./pages/Legal";
+import { About, Contact, Demo } from "./pages/InfoPages";
 import { captureRef } from "./lib/ref";
 
 // Keep a trainee referral code (?ref=CODE) for the Hub checkout.
@@ -61,6 +62,11 @@ function Router() {
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/privacy" component={Legal} />
       <Route path="/terms" component={Legal} />
+      {/* /pricing opens the home page at its plans, so the prices live in one place. */}
+      <Route path="/pricing"><Home section="pricing" /></Route>
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/demo" component={Demo} />
       {Object.entries(retiredPaths).map(([path, to]) => (
         <Route key={path} path={path}>
           <Redirect to={to} replace />

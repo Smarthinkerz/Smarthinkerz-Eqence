@@ -42,7 +42,7 @@ function Body() {
       <label className="block text-sm"><span className="font-medium text-gray-700">Tone</span>
         <input className={inputClass} value={tone} onChange={(e) => setTone(e.target.value)} maxLength={200} /></label>
       <label className="block text-sm"><span className="font-medium text-gray-700">Arabic style notes</span>
-        <input className={inputClass} placeholder="e.g. Gulf Arabic, friendly, avoid very formal MSA" value={dialect} onChange={(e) => setDialect(e.target.value)} maxLength={300} /></label>
+        <input className={inputClass} placeholder="e.g. friendly, avoid very formal Arabic" value={dialect} onChange={(e) => setDialect(e.target.value)} maxLength={300} /></label>
       <label className="block text-sm"><span className="font-medium text-gray-700">Never say (one phrase per line)</span>
         <textarea className={inputClass} rows={4} value={banned} onChange={(e) => setBanned(e.target.value)} /></label>
       <label className="block text-sm"><span className="font-medium text-gray-700">Signature</span>
