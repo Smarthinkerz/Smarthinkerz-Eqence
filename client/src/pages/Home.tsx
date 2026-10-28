@@ -20,11 +20,12 @@ const pricingPlans = [
 ];
 
 export default function Home({ section }: { section?: string; params?: unknown } = {}) {
-  const { t, setting } = useI18n();
+  const { t, setting, contentLoaded } = useI18n();
   // /pricing renders this page scrolled to that section.
   useEffect(() => { if (section) document.getElementById(section)?.scrollIntoView(); }, [section]);
   // Admin → Front page → Home page: 'off' replaces both background videos with a plain background.
-  const videosOff = setting('home.videos').toLowerCase() === 'off';
+  // Until the setting has loaded the videos stay unmounted, so they never start and then vanish.
+  const videosOff = !contentLoaded || setting('home.videos').toLowerCase() === 'off';
   const planFeatures = (plan: (typeof pricingPlans)[number]) => [
     `${plan.replies === -1 ? t('pricing.unlimited') : plan.replies.toLocaleString()} ${t('pricing.f.replies')}`,
     `${plan.sources === -1 ? t('pricing.unlimited') : plan.sources} ${t(plan.sources === 1 ? 'pricing.f.source' : 'pricing.f.sources')}`,
@@ -106,7 +107,7 @@ export default function Home({ section }: { section?: string; params?: unknown }
       window.removeEventListener('touchstart', startBackgroundVideos);
       window.removeEventListener('pointerdown', startBackgroundVideos);
     };
-  }, []);
+  }, [videosOff]);
 
   return (
     <div className="min-h-screen bg-white">

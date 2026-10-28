@@ -12,6 +12,8 @@ interface I18nContextType {
   reloadContent: () => void;
   /** A site-wide setting saved in the admin (English tab), the same for every language. Empty when unset. */
   setting: (key: string) => string;
+  /** False until the first GET /api/content has answered (or failed), so settings are not yet known. */
+  contentLoaded: boolean;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -381,12 +383,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [autoTranslations, setAutoTranslations] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
+  const [contentLoaded, setContentLoaded] = useState(false);
 
   const reloadContent = useCallback(() => {
     fetch(`${API_URL}/api/content`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (j?.overrides) setOverrides(j.overrides); })
-      .catch(() => { /* the built-in text stays */ });
+      .catch(() => { /* the built-in text stays */ })
+      .finally(() => setContentLoaded(true));
   }, []);
   useEffect(() => { reloadContent(); }, [reloadContent]);
 
@@ -458,7 +462,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [language, autoTranslations, overrides]);
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t, isLoading, reloadContent, setting }}>
+    <I18nContext.Provider value={{ language, setLanguage, t, isLoading, reloadContent, setting, contentLoaded }}>
       {children}
     </I18nContext.Provider>
   );
