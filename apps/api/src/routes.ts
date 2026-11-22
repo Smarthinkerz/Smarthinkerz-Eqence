@@ -166,10 +166,16 @@ export function mountRoutes(app: Hono<any>) {
     const t = await tenantOf(c);
     const plan = selfServePlans().find((p) => p.slug === c.req.query('plan'));
     if (!plan) return c.json({ error: activeLadder().length ? 'unknown or contact-only plan' : 'pricing is not confirmed yet' }, 409);
+    const cycle = c.req.query('cycle') === 'yearly' ? 'yearly' : 'monthly';
+    if (cycle === 'yearly' && plan.yearlyUsd == null) return c.json({ error: 'this plan is sold monthly only' }, 409);
+    // The partner secret signs the price; without it no link the Hub would honour can be made,
+    // and the webhook that grants the plan could not be verified either.
+    const secret = process.env.HUB_PARTNER_SECRET || '';
+    if (!secret) return c.json({ error: 'billing is not configured yet' }, 503);
     const u = c.get('user') as { email: string };
     const url = checkoutUrl({
       hubBaseUrl: process.env.HUB_BASE_URL || 'https://smarthinkerz.com',
-      plan, cycle: c.req.query('cycle') === 'yearly' ? 'yearly' : 'monthly', tenantId: t.id, email: u.email,
+      plan, cycle, tenantId: t.id, email: u.email, secret,
       // Return to the Eqence site the buyer came from (beta before cutover), if it is one of ours.
       returnUrl: `${env.webOrigins.includes(c.req.header('origin') ?? '') ? c.req.header('origin') : env.webUrl}/app/billing/return`,
       ref: c.req.query('ref') ?? null,

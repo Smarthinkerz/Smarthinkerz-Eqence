@@ -29,7 +29,7 @@ const filters = [
   { key: '', label: 'All' },
   { key: 'triaged', label: 'Needs reply' },
   { key: 'responded', label: 'Replied' },
-  { key: 'new', label: 'Not analysed yet' },
+  { key: 'new', label: 'Not analyzed yet' },
 ];
 
 export default function Inbox() {

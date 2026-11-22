@@ -5,11 +5,12 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
-    "check": "tsc --noEmit",
-    "format": "prettier --write ."
+    "check": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
+    "format": "prettier --write .",
+    "test": "node --import tsx --test packages/*/test/*.test.ts apps/api/test/*.test.ts client/src/lib/*.test.ts client/src/components/*.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

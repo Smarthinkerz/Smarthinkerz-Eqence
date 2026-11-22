@@ -21,6 +21,7 @@ export default function SiteFooter() {
             <li><a href="/#how-it-works" className="hover:text-white transition-colors">{t('howit.title')}</a></li>
             <li><a href="/#pricing" className="hover:text-white transition-colors">{t('nav.pricing')}</a></li>
             <li><Link href="/blog" className="hover:text-white transition-colors">{t('nav.blog')}</Link></li>
+            <li><Link href="/faq" className="hover:text-white transition-colors">{t('nav.faq')}</Link></li>
           </ul>
         </div>
         <div>

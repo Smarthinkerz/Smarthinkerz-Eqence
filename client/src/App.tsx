@@ -20,7 +20,8 @@ import Customers from "./pages/app/Customers";
 import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
 import Blog, { BlogPost } from "./pages/Blog";
 import Legal from "./pages/Legal";
-import { About, Contact, Demo } from "./pages/InfoPages";
+import { About, Contact, Demo, Faq } from "./pages/InfoPages";
+import { usePageMeta } from "./lib/pageMeta";
 import { captureRef } from "./lib/ref";
 
 // Keep a trainee referral code (?ref=CODE) for the Hub checkout.
@@ -33,6 +34,7 @@ const retiredPaths: Record<string, string> = {
 };
 
 function Router() {
+  usePageMeta();
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -67,6 +69,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
       <Route path="/demo" component={Demo} />
+      <Route path="/faq" component={Faq} />
       {Object.entries(retiredPaths).map(([path, to]) => (
         <Route key={path} path={path}>
           <Redirect to={to} replace />

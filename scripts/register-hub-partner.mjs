@@ -60,7 +60,8 @@ const HUB_PLANS_FILE = process.env.HUB_PLANS_FILE || path.resolve(ROOT, '../Smar
 const APP_ID = 'eqence';
 const DISPLAY_NAME = 'Eqence';
 const CURRENCY = 'USD';
-const EVENTS = 'order.paid,order.failed,order.refunded';
+// All four: a partial refund is recorded in the audit log (never revokes), so it is subscribed too.
+const EVENTS = 'order.paid,order.failed,order.refunded,order.partially_refunded';
 
 function fail(msg, details = []) {
   console.error(`\nREFUSED: ${msg}`);

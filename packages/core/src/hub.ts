@@ -9,8 +9,14 @@
 //  - event_id = sh_<internal event>_<order id>, stable across retries; no timestamp, so
 //    replay protection is the event_id dedupe
 //  - older Hub builds sent the signature header twice, folded as "sha256=a, sha256=a"
-import { createHmac, timingSafeEqual } from 'node:crypto';
-import { auditLog, hubEvents, tenants, user, type Db } from '@eqence/db';
+// Checkout (Hub PAYMENT_GATEWAY.md sections 3 and 3b, lib/signedAmountCanonical.ts):
+//  - user_id carries the workspace id and comes back as metadata.user_id: that is the
+//    join key. Email is never used to bind a payment (partner-app README, "Binding on email").
+//  - the price is partner-signed (scheme shz.amount.v2) with the same partner secret that
+//    signs the webhooks, so the link states exactly what Eqence grants for it. A fresh
+//    external_ref per checkout is the nonce; exp bounds the link's life.
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { auditLog, hubEvents, tenants, type Db } from '@eqence/db';
 import { and, eq, sql } from 'drizzle-orm';
 import { selfServePlans, type Plan } from './pricing';
 
@@ -29,18 +35,72 @@ export function verifyHubSignature(rawBody: Buffer | string, header: string | nu
 }
 
 const REF_RE = /^[A-Za-z0-9_-]{3,32}$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** How long a signed checkout link stays valid. The Hub allows at most 24 hours. */
+export const CHECKOUT_TTL_SECONDS = 30 * 60;
+export const CHECKOUT_CURRENCY = 'USD';
+
+const netstring = (v: string) => `${Buffer.byteLength(v, 'utf8')}:${v},`;
+
+/** The exact bytes the Hub hashes for a partner-signed amount (shz.amount.v2). The item
+ *  name is trimmed and cut to 200 characters first, as the Hub does before verifying. */
+export function signedAmountCanonical(f: {
+  appId: string; planSlug: string; amount: string; currency: string; externalRef: string; exp: number; itemName?: string;
+}): string {
+  return netstring('shz.amount.v2') + netstring(f.appId) + netstring(f.planSlug) + netstring(f.amount)
+    + netstring(f.currency.toUpperCase()) + netstring(f.externalRef) + netstring(String(f.exp))
+    + netstring((f.itemName ?? '').trim().slice(0, 200));
+}
+
+export function signAmount(fields: Parameters<typeof signedAmountCanonical>[0], secret: string): string {
+  return 'sha256=' + createHmac('sha256', secret).update(signedAmountCanonical(fields), 'utf8').digest('hex');
+}
+
+/** USD has exactly one legal spelling at the Hub: two decimals, no leading zeros. */
+export function formatUsd(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error('price must be a positive number');
+  return amount.toFixed(2);
+}
+
+/** The price a plan is sold at for a cycle. A plan without a yearly price is monthly only. */
+export function priceFor(plan: Plan, cycle: 'monthly' | 'yearly'): number {
+  if (cycle === 'yearly') {
+    if (plan.yearlyUsd == null) throw new Error(`plan ${plan.slug} has no yearly price`);
+    return plan.yearlyUsd;
+  }
+  return plan.monthlyUsd;
+}
+
+/** A fresh single-use reference per checkout: the signed amount's nonce. */
+export function newCheckoutRef(): string {
+  return 'eqc_' + randomBytes(12).toString('hex');
+}
 
 export function checkoutUrl(opts: {
   hubBaseUrl: string; plan: Plan; cycle: 'monthly' | 'yearly'; tenantId: string; email?: string;
-  returnUrl: string; ref?: string | null;
+  returnUrl: string; ref?: string | null; secret: string; now?: number; externalRef?: string;
 }): string {
+  if (!opts.secret) throw new Error('HUB_PARTNER_SECRET is not set; checkout links cannot be signed');
+  if (!UUID_RE.test(opts.tenantId)) throw new Error('tenant id must be a UUID');
+  const amount = formatUsd(priceFor(opts.plan, opts.cycle));
+  const externalRef = opts.externalRef ?? newCheckoutRef();
+  const exp = Math.floor((opts.now ?? Date.now()) / 1000) + CHECKOUT_TTL_SECONDS;
   const u = new URL('/checkout', opts.hubBaseUrl);
   u.searchParams.set('plan', opts.plan.slug);
   u.searchParams.set('app_id', HUB_APP_ID);
   u.searchParams.set('cycle', opts.cycle);
   u.searchParams.set('return_url', opts.returnUrl);
-  // external_ref is echoed back in the webhook: it is how a payment finds its workspace.
-  u.searchParams.set('external_ref', opts.tenantId);
+  // user_id is echoed back as metadata.user_id: it is how a payment finds its workspace.
+  u.searchParams.set('user_id', opts.tenantId);
+  u.searchParams.set('external_ref', externalRef);
+  u.searchParams.set('amount', amount);
+  u.searchParams.set('currency', CHECKOUT_CURRENCY);
+  u.searchParams.set('exp', String(exp));
+  u.searchParams.set('sig', signAmount({
+    appId: HUB_APP_ID, planSlug: opts.plan.slug, amount, currency: CHECKOUT_CURRENCY, externalRef, exp,
+  }, opts.secret));
+  // Prefills the checkout form only; it never binds the payment.
   if (opts.email) u.searchParams.set('email', opts.email);
   // Trainee referral code, passed through for the Hub's commission attribution.
   if (opts.ref && REF_RE.test(opts.ref)) u.searchParams.set('ref', opts.ref);
@@ -91,21 +151,14 @@ export async function applyHubEvent(db: Db, p: HubPayload): Promise<HubOutcome> 
     // A Hub-side connectivity check: signature verified, nothing else happens.
     if (event === 'test.ping') return finish('test_ok');
 
-    // Find the workspace: external_ref carries the tenant id from our checkout link;
-    // fall back to the buyer's email only when the ref is absent.
+    // Find the workspace: metadata.user_id carries the tenant id from our checkout link.
+    // Links issued before user_id was sent carried the tenant id in external_ref, and the
+    // Hub copies both onto renewals, so that is honoured too. Email never binds a payment.
     let tenantId: string | null = null;
-    const ref = p.external_ref ?? null;
-    if (ref && /^[0-9a-f-]{36}$/.test(ref)) {
-      const [t] = await tx.select({ id: tenants.id }).from(tenants).where(eq(tenants.id, ref));
+    for (const candidate of [p.metadata?.user_id, p.external_ref]) {
+      if (tenantId || !candidate || !UUID_RE.test(candidate)) continue;
+      const [t] = await tx.select({ id: tenants.id }).from(tenants).where(eq(tenants.id, candidate));
       tenantId = t?.id ?? null;
-    }
-    if (!tenantId) {
-      const email = String(p.email ?? p.customer_email ?? '').toLowerCase();
-      if (email) {
-        const [t] = await tx.select({ id: tenants.id }).from(tenants).innerJoin(user, eq(user.id, tenants.ownerUserId))
-          .where(eq(sql`lower(${user.email})`, email));
-        tenantId = t?.id ?? null;
-      }
     }
     if (!tenantId) return finish('ignored:no_matching_workspace');
 

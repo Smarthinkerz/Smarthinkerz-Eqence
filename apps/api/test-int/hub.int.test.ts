@@ -29,10 +29,10 @@ function payload(event: string, extra: Record<string, unknown> = {}) {
   const eventId = `sh_${internal.replace(/\./g, '_')}_${id}_${uid.slice(-8)}`;
   return {
     event, event_id: eventId, id: eventId, email, customer_email: email, name: 'Hub Test', plan: 'eqence-starter', plan_slug: 'eqence-starter',
-    metadata: { user_id: null, plan_id: 'eqence-starter', app_id: 'eqence', customer_email: email, name: 'Hub Test' },
+    metadata: { user_id: tenantId, plan_id: 'eqence-starter', app_id: 'eqence', customer_email: email, name: 'Hub Test' },
     internal_event: internal, order_id: id, app_id: 'eqence', tap_charge_id: `chg_test_${id}`, plan_label: 'Starter',
     product: 'Eqence', cycle: 'monthly', amount: 29, currency: 'USD', status: 'paid', customer: { name: 'Hub Test', email, phone: null },
-    external_ref: tenantId, paid_at: new Date().toISOString(), refunded_amount: null, refunded_at: null, failure_message: null,
+    external_ref: `eqc_${String(id).padStart(24, '0')}`, paid_at: new Date().toISOString(), refunded_amount: null, refunded_at: null, failure_message: null,
     created_at: new Date().toISOString(), ...extra,
   };
 }
@@ -186,10 +186,50 @@ test('subscription.cancelled (the Hub\'s refund event) revokes the plan', async 
   assert.equal((await quotaFor(db, tenantId)).limit, 0, 'no AI actions after revocation');
 });
 
-test('without external_ref the buyer\'s email finds the workspace', async () => {
-  const r = await deliver(payload('payment.success', { external_ref: null }));
+test('email never binds a payment: without user_id or a workspace ref nothing is granted', async () => {
+  const before = await tenant();
+  const p = payload('payment.success');
+  const r = await deliver({ ...p, metadata: { ...p.metadata, user_id: null } });
+  assert.equal(r.body.outcome, 'ignored:no_matching_workspace');
+  const after = await tenant();
+  assert.equal(after.planStatus, before.planStatus);
+  assert.equal(after.planExpiresAt?.getTime(), before.planExpiresAt?.getTime());
+});
+
+test('a link issued before user_id was sent (tenant id in external_ref) still binds', async () => {
+  const p = payload('payment.success');
+  const r = await deliver({ ...p, metadata: { ...p.metadata, user_id: null }, external_ref: tenantId });
   assert.equal(r.body.outcome, 'granted');
   assert.equal((await tenant()).planStatus, 'active');
+});
+
+test('metadata.user_id that is not a workspace grants nothing', async () => {
+  const p = payload('payment.success');
+  const r = await deliver({ ...p, metadata: { ...p.metadata, user_id: randomUUID() } });
+  assert.equal(r.body.outcome, 'ignored:no_matching_workspace');
+});
+
+test('a delivery that fails while being applied returns 5xx so the Hub retries, and leaves no dedupe row', async () => {
+  const p = payload('payment.success');
+  const m = mock.method(db, 'transaction', async () => { throw new Error('database unavailable'); });
+  try {
+    const r = await deliver(p);
+    assert.equal(r.status, 500);
+  } finally { m.mock.restore(); }
+  assert.equal((await db.select().from(hubEvents).where(eq(hubEvents.eventId, p.event_id))).length, 0);
+  assert.equal((await deliver(p)).body.outcome, 'granted', 'the retry is processed');
+});
+
+test('payment.failed is recorded once and never changes the plan', async () => {
+  const before = await tenant();
+  const p = payload('payment.failed');
+  assert.equal((await deliver(p)).body.outcome, 'recorded:payment_failed');
+  assert.equal((await deliver(p)).body.outcome, 'duplicate');
+  const after = await tenant();
+  assert.equal(after.planStatus, before.planStatus);
+  assert.equal(after.planExpiresAt?.getTime(), before.planExpiresAt?.getTime());
+  const rows = await db.select().from(auditLog).where(and(eq(auditLog.tenantId, tenantId), eq(auditLog.action, 'billing.payment_failed'), eq(auditLog.target, p.event_id)));
+  assert.equal(rows.length, 1);
 });
 
 test('malformed deliveries are rejected', async () => {
