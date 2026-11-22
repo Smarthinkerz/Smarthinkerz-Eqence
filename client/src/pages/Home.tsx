@@ -10,6 +10,7 @@ import SiteChat from '../components/SiteChat';
 const HERO_BACKGROUND_VIDEO_URL = '/media/eqence-hero-mobile.mp4';
 const HOW_IT_WORKS_BACKGROUND_VIDEO_URL = '/media/eqence-how-it-works.mp4';
 type BackgroundVideoId = 'hero' | 'how-it-works';
+type BackgroundVideo = { id: BackgroundVideoId; video: HTMLVideoElement; setPlaying: (playing: boolean) => void };
 
 const pricingPlans = [
   { id: 'starter', name: 'Starter', price: 29, replies: 100, sources: 1, popular: false },
@@ -60,13 +61,12 @@ export default function Home({ section }: { section?: string; params?: unknown }
   useEffect(() => {
     const heroVideo = heroVideoRef.current;
     const howItWorksVideo = howItWorksVideoRef.current;
-    const backgroundVideos = [
-      { id: 'hero' as const, video: heroVideo, setPlaying: setIsHeroVideoPlaying },
-      { id: 'how-it-works' as const, video: howItWorksVideo, setPlaying: setIsHowItWorksVideoPlaying },
-    ].filter((item): item is { id: BackgroundVideoId; video: HTMLVideoElement; setPlaying: (playing: boolean) => void } => item.video !== null);
+    const backgroundVideos: BackgroundVideo[] = [];
+    if (heroVideo) backgroundVideos.push({ id: 'hero', video: heroVideo, setPlaying: setIsHeroVideoPlaying });
+    if (howItWorksVideo) backgroundVideos.push({ id: 'how-it-works', video: howItWorksVideo, setPlaying: setIsHowItWorksVideoPlaying });
     if (!backgroundVideos.length) return;
 
-    const startMutedPlayback = ({ id, video, setPlaying }: (typeof backgroundVideos)[number]) => {
+    const startMutedPlayback = ({ id, video, setPlaying }: BackgroundVideo) => {
       if (manuallyPausedVideos.current.has(id)) return;
       video.muted = true;
       video.defaultMuted = true;
