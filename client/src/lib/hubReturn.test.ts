@@ -24,6 +24,11 @@ test('a plan parameter is ignored: the plan comes only from the signed webhook',
   assert.equal('plan' in parseHubReturn('?status=paid&plan=eqence-premium'), false);
 });
 
+test('external_ref: the signed-checkout nonce and older UUID refs are kept', () => {
+  assert.equal(parseHubReturn('?status=paid&external_ref=eqc_0123456789abcdef01234567').externalRef, 'eqc_0123456789abcdef01234567');
+  assert.equal(parseHubReturn(`?status=paid&external_ref=${ws}`).externalRef, ws);
+});
+
 test('external_ref is optional and malformed values are dropped', () => {
   const r = parseHubReturn('?status=paid&order_id=12&tap_id=chg_x1');
   assert.equal(r.externalRef, null);

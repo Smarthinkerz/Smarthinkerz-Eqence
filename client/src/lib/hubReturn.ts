@@ -20,6 +20,7 @@ export function parseHubReturn(search: string): HubReturn {
     status: s === 'paid' ? 'paid' : s === 'cancelled' ? 'cancelled' : 'failed',
     orderId: clean(q.get('order_id'), /^\d{1,12}$/),
     tapId: clean(q.get('tap_id'), /^[A-Za-z0-9_]{3,64}$/),
-    externalRef: clean(q.get('external_ref'), /^[0-9a-f-]{36}$/),
+    // eqc_<hex> from current links; a bare UUID from links issued before signed amounts.
+    externalRef: clean(q.get('external_ref'), /^(eqc_[0-9a-f]{24}|[0-9a-f-]{36})$/),
   };
 }

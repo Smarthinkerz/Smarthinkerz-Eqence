@@ -1,0 +1,119 @@
+{
+  "scheme": "shz.amount.v2",
+  "note": "Conformance vectors for the partner-signed amount scheme. Both the Hub's verifier (artifacts/api-server/src/lib/signedAmount.ts) and a partner's signer (TabiAI: artifacts/api-server/src/lib/hubSignature.ts) must reproduce every canonical string and signature below, byte for byte. The secret is a fixed test value and is not a credential.",
+  "secret": "shz-conformance-vectors-secret-do-not-use-in-production",
+  "cases": [
+    {
+      "name": "plain USD tour",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-tour",
+        "amount": "76.00",
+        "currency": "USD",
+        "externalRef": "ord_1758000000_a1b2c3",
+        "expiresAt": 1789000000,
+        "itemName": "Philae Temple at dusk & Isis-cult tales Walking Tour"
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,11:tabiai-tour,5:76.00,3:USD,21:ord_1758000000_a1b2c3,10:1789000000,52:Philae Temple at dusk & Isis-cult tales Walking Tour,",
+      "signature": "sha256=278bd54834cf3d59820eebec2c07ad699cb669eee98f7465aa3ecd64ffa200dd"
+    },
+    {
+      "name": "no item name",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-tour",
+        "amount": "4.500",
+        "currency": "KWD",
+        "externalRef": "ord_x",
+        "expiresAt": 1789000001,
+        "itemName": ""
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,11:tabiai-tour,5:4.500,3:KWD,5:ord_x,10:1789000001,0:,",
+      "signature": "sha256=514762adb438b4bc19354f093c98c0def093816a06ecd86041a7c3dd47359745"
+    },
+    {
+      "name": "zero-decimal currency, multibyte name",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-tour",
+        "amount": "4500",
+        "currency": "JPY",
+        "externalRef": "ord_y",
+        "expiresAt": 1789000002,
+        "itemName": "京都の隠れた path — 夜歩き"
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,11:tabiai-tour,4:4500,3:JPY,5:ord_y,10:1789000002,37:京都の隠れた path — 夜歩き,",
+      "signature": "sha256=4f693528533f3e61f2dd7639e11c2e0e263881d14c1018947ef8bff3f929345d"
+    },
+    {
+      "name": "lowercase currency is upper-cased before hashing",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-tour",
+        "amount": "4500",
+        "currency": "jpy",
+        "externalRef": "ord_y",
+        "expiresAt": 1789000002,
+        "itemName": "京都の隠れた path — 夜歩き"
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,11:tabiai-tour,4:4500,3:JPY,5:ord_y,10:1789000002,37:京都の隠れた path — 夜歩き,",
+      "signature": "sha256=4f693528533f3e61f2dd7639e11c2e0e263881d14c1018947ef8bff3f929345d"
+    },
+    {
+      "name": "item name is trimmed before hashing",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-pro",
+        "amount": "19.99",
+        "currency": "USD",
+        "externalRef": "ord_sub",
+        "expiresAt": 1789000004,
+        "itemName": "  padded name that gets trimmed  "
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,10:tabiai-pro,5:19.99,3:USD,7:ord_sub,10:1789000004,29:padded name that gets trimmed,",
+      "signature": "sha256=6dbef0d1cc4a5179a3b911b981393716556fd9f0b43c643eb167898ee0515289"
+    },
+    {
+      "name": "delimiter in ref (collided under v1)",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-tour",
+        "amount": "12.00",
+        "currency": "USD",
+        "externalRef": "ord|z",
+        "expiresAt": 1789000003,
+        "itemName": "a|b,c:d"
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,11:tabiai-tour,5:12.00,3:USD,5:ord|z,10:1789000003,7:a|b,c:d,",
+      "signature": "sha256=73e7e95783b43a366066d6cb52b297842731ebf38251385a27ea6e797552138c"
+    },
+    {
+      "name": "delimiter shifted one field over (collided under v1)",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-tour",
+        "amount": "12.00",
+        "currency": "USD",
+        "externalRef": "ord",
+        "expiresAt": 1789000003,
+        "itemName": "|z,a|b,c:d"
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,11:tabiai-tour,5:12.00,3:USD,3:ord,10:1789000003,10:|z,a|b,c:d,",
+      "signature": "sha256=7699976bef2f86c28a48040e057c604c05be883c7cb38f01f633944a53762b7d"
+    },
+    {
+      "name": "item name longer than 200 is cut",
+      "fields": {
+        "appId": "tabiai",
+        "planSlug": "tabiai-tour",
+        "amount": "9.00",
+        "currency": "USD",
+        "externalRef": "ord_long",
+        "expiresAt": 1789000005,
+        "itemName": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "canonical": "13:shz.amount.v2,6:tabiai,11:tabiai-tour,4:9.00,3:USD,8:ord_long,10:1789000005,200:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,",
+      "signature": "sha256=42c68ef4d17646f5834269a6ea28366d097c8305002527c4d3be437c24735622"
+    }
+  ]
+}
