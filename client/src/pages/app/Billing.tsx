@@ -52,8 +52,8 @@ function BillingBody({ me }: { me: Me }) {
         <p className="text-sm text-gray-700 mt-1">
           {me.user.isSuperUser ? 'Super user: unlimited access, no plan needed.'
             : current ? <>You are on <b>{current.name}</b> ({t?.planCycle}). {t?.planExpiresAt && <>Renews or ends on {new Date(t.planExpiresAt).toLocaleDateString()}.</>}</>
-            : t?.planStatus === 'cancelled' ? 'Your plan was cancelled. Choose a plan to continue drafting replies.'
-            : 'No active plan. Reviews are imported and analysed for free; choose a plan to draft replies with AI.'}
+            : t?.planStatus === 'cancelled' ? 'Your plan was canceled. Choose a plan to continue drafting replies.'
+            : 'No active plan. Reviews are imported and analyzed for free; choose a plan to draft replies with AI.'}
         </p>
         {usage && <p className="text-sm text-gray-600 mt-1">AI replies this month: <b>{usage.used}</b>{usage.limit === -1 ? ' (unlimited)' : ` of ${usage.limit}`}</p>}
       </section>
@@ -131,7 +131,7 @@ function ReturnBody() {
     <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-xl">
       {status !== 'paid' ? (
         <><h1 className="text-lg font-bold text-gray-900">Payment not completed</h1>
-          <p className="text-gray-700 mt-2">{status === 'cancelled' ? 'You cancelled the checkout.' : 'The payment did not go through.'} Your plan has not changed.</p></>
+          <p className="text-gray-700 mt-2">{status === 'cancelled' ? 'You canceled the checkout.' : 'The payment did not go through.'} Your plan has not changed.</p></>
       ) : state === 'active' ? (
         <><h1 className="text-lg font-bold text-gray-900">Your plan is active</h1>
           <p className="text-gray-700 mt-2">Thank you. You can now draft replies with AI.</p></>

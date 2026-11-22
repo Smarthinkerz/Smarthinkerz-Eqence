@@ -89,7 +89,7 @@ export const translations: Record<string, Record<string, string>> = {
     'features.integrations': 'Arabic and English',
     'features.integrations.desc': 'Reads reviews in Arabic and English and drafts the reply in the customer\'s language, Arabic or English.',
     'pricing.title': 'Pricing',
-    'pricing.subtitle': 'Importing and analysing your reviews is free. A plan lets you draft replies with AI. Annual billing gives two months free.',
+    'pricing.subtitle': 'Importing and analyzing your reviews is free. A plan lets you draft replies with AI. Annual billing gives two months free.',
     'pricing.free': 'Free',
     'pricing.starter': 'Starter',
     'pricing.basic': 'Basic',
