@@ -17,6 +17,12 @@ async function tenantOf(c: Context) {
   return t;
 }
 
+// Writes must come from our own web app (the browser always sends Origin on these
+// cross-origin requests), and ids must be uuids before they reach a uuid column.
+const fromOurSite = (c: Context) => env.webOrigins.includes(c.req.header('origin') ?? '');
+const isUuid = (s: string | undefined) => !!s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(s);
+const notFound = (c: Context) => c.json({ error: 'not found' }, 404);
+
 function fail(c: Context, err: unknown) {
   if (err instanceof QuotaExceeded) return c.json({ error: err.message }, 402);
   if (err instanceof NotAllowed) return c.json({ error: err.message }, 404);
@@ -25,6 +31,15 @@ function fail(c: Context, err: unknown) {
 }
 
 export function mountRoutes(app: Hono<any>) {
+  for (const path of ['/api/v1/connections/*', '/api/v1/interactions/*', '/api/v1/responses/*', '/api/v1/brand-voice']) {
+    app.use(path, async (c, next) => {
+      if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.method !== 'OPTIONS' && !fromOurSite(c)) {
+        return c.json({ error: 'cross-site request refused' }, 403);
+      }
+      await next();
+    });
+  }
+
   /* ── connections ── */
   app.get('/api/v1/connections', async (c) => {
     const t = await tenantOf(c);
@@ -60,6 +75,7 @@ export function mountRoutes(app: Hono<any>) {
   });
 
   app.post('/api/v1/connections/:id/sync', async (c) => {
+    if (!isUuid(c.req.param('id'))) return notFound(c);
     const t = await tenantOf(c);
     const [conn] = await db.select().from(connections).where(and(eq(connections.id, c.req.param('id')), eq(connections.tenantId, t.id)));
     if (!conn) return c.json({ error: 'not found' }, 404);
@@ -68,6 +84,7 @@ export function mountRoutes(app: Hono<any>) {
   });
 
   app.delete('/api/v1/connections/:id', async (c) => {
+    if (!isUuid(c.req.param('id'))) return notFound(c);
     const t = await tenantOf(c);
     const loaded = await loadConnection(db, c.req.param('id'));
     if (!loaded || loaded.row.tenantId !== t.id) return c.json({ error: 'not found' }, 404);
@@ -105,6 +122,7 @@ export function mountRoutes(app: Hono<any>) {
   });
 
   app.post('/api/v1/interactions/:id/draft', async (c) => {
+    if (!isUuid(c.req.param('id'))) return notFound(c);
     const t = await tenantOf(c);
     try {
       const r = await draftForInteraction(db, aiConfigFromEnv(), t.id, c.req.param('id'), t.name);
@@ -113,6 +131,7 @@ export function mountRoutes(app: Hono<any>) {
   });
 
   app.patch('/api/v1/responses/:id', async (c) => {
+    if (!isUuid(c.req.param('id'))) return notFound(c);
     const t = await tenantOf(c);
     const body = await c.req.json().catch(() => ({})) as { body?: string };
     try { return c.json({ response: await editResponse(db, t.id, c.req.param('id'), String(body.body ?? '')) }); }
@@ -120,12 +139,14 @@ export function mountRoutes(app: Hono<any>) {
   });
 
   app.post('/api/v1/responses/:id/approve', async (c) => {
+    if (!isUuid(c.req.param('id'))) return notFound(c);
     const t = await tenantOf(c);
     try { return c.json({ response: await approveResponse(db, t.id, c.req.param('id'), (c.get('user') as { id: string }).id) }); }
     catch (err) { return fail(c, err); }
   });
 
   app.post('/api/v1/responses/:id/reject', async (c) => {
+    if (!isUuid(c.req.param('id'))) return notFound(c);
     const t = await tenantOf(c);
     try { return c.json({ response: await rejectResponse(db, t.id, c.req.param('id'), (c.get('user') as { id: string }).id) }); }
     catch (err) { return fail(c, err); }

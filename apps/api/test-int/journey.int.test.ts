@@ -11,7 +11,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
-import { account, auditLog, hubEvents, interactions, outbox, responses, tenants, user } from '@eqence/db';
+import { account, auditLog, connections, hubEvents, interactions, outbox, responses, tenants, user } from '@eqence/db';
 import { and, eq, sql } from 'drizzle-orm';
 
 process.env.BETTER_AUTH_SECRET ||= 'test-only-secret-not-used-for-anything-real';
@@ -230,4 +230,35 @@ test('approval: only the approved reply is posted to Judge.me, once; the rejecte
   assert.equal((await req('POST', `/api/v1/responses/${ar.responses[0].id}/approve`)).status, 404, 'a sent reply cannot be approved again');
   await drain();
   assert.equal(judgeCalls.filter((c) => c.path === '/replies').length, 1, 'still posted exactly once');
+});
+
+test('guards: a malformed id is a plain 404, and writes from another site are refused before anything changes', async () => {
+  for (const [method, path] of [
+    ['POST', '/api/v1/connections/not-a-uuid/sync'],
+    ['DELETE', '/api/v1/connections/not-a-uuid'],
+    ['POST', '/api/v1/interactions/not-a-uuid/draft'],
+    ['PATCH', '/api/v1/responses/not-a-uuid'],
+    ['POST', '/api/v1/responses/not-a-uuid/approve'],
+    ['POST', '/api/v1/responses/not-a-uuid/reject'],
+  ] as const) {
+    const r = await req(method, path, method === 'PATCH' ? { body: 'x' } : undefined);
+    assert.equal(r.status, 404, `${method} ${path}`);
+  }
+  const connBefore = await db.select().from(connections).where(eq(connections.id, connId));
+  for (const origin of ['https://evil.example', '']) {
+    const h = { Origin: origin };
+    for (const [method, path, body] of [
+      ['POST', '/api/v1/connections/judgeme', { shopDomain: SHOP, apiToken: TOKEN }],
+      ['POST', `/api/v1/connections/${connId}/sync`, undefined],
+      ['DELETE', `/api/v1/connections/${connId}`, undefined],
+      ['PUT', '/api/v1/brand-voice', { tone: 'hijacked' }],
+    ] as const) {
+      const r = await req(method, path, body, h);
+      assert.equal(r.status, 403, `${method} ${path} from ${origin || 'no origin'}`);
+    }
+  }
+  const connAfter = await db.select().from(connections).where(eq(connections.id, connId));
+  assert.equal(connAfter[0].status, connBefore[0].status, 'the connection was not revoked');
+  const voice = await req('GET', '/api/v1/brand-voice');
+  assert.notEqual((await voice.json() as { brandVoice: { tone?: string } | null }).brandVoice?.tone, 'hijacked');
 });
