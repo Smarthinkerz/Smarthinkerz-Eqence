@@ -1,21 +1,39 @@
 // Client for the Eqence API (api.eqence.com). Auth is Better Auth's session cookie,
 // scoped to .eqence.com, so every request is sent with credentials.
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'https://api.eqence.com';
+export const API_URL = (import.meta.env?.VITE_API_URL as string | undefined) || 'https://api.eqence.com';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number, readonly detail?: string) { super(message); }
 }
 
+// Shown when the API cannot be reached or answers with something other than our JSON
+// (a proxy error page, say), instead of the browser's "Failed to fetch" or a JSON parse error.
+export const UNREACHABLE_MESSAGE = 'We could not reach Eqence just now. Please try again in a few minutes.';
+
 export async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
-  const res = await fetch(API_URL + path, {
-    method: init.method ?? 'GET',
-    credentials: 'include',
-    headers: init.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
-    body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
-  });
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
-  if (!res.ok) throw new ApiError(data.message || data.error || `Request failed (${res.status})`, res.status, data.detail);
+  let res: Response;
+  try {
+    res = await fetch(API_URL + path, {
+      method: init.method ?? 'GET',
+      credentials: 'include',
+      headers: init.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
+    });
+  } catch {
+    throw new ApiError(UNREACHABLE_MESSAGE, 0);
+  }
+  const text = await res.text().catch(() => '');
+  let data: any = {};
+  if (text) {
+    try { data = JSON.parse(text); } catch {
+      if (res.ok) throw new ApiError(UNREACHABLE_MESSAGE, res.status);
+      data = {};
+    }
+  }
+  if (!res.ok) {
+    const fallback = res.status >= 502 && res.status <= 504 ? UNREACHABLE_MESSAGE : `Request failed (${res.status})`;
+    throw new ApiError(data?.message || data?.error || fallback, res.status, data?.detail);
+  }
   return data as T;
 }
 
