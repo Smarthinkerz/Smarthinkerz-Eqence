@@ -1,6 +1,6 @@
 // Integration test of the core loop against a real PostgreSQL (eqence_dev on csb-fra).
 // The AI provider is stubbed (no key needed); everything else is the production code.
-// Run on the server:  DATABASE_URL=<eqence_dev> node --import tsx --test test-int/*.int.test.ts
+// Run: DATABASE_URL=<a throwaway test database> pnpm test:int  (see scripts/test-int.sh)
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
