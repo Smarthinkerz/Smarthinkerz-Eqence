@@ -1,5 +1,8 @@
 # Eqence agent status
 
+## Current run
+Started 2026-11-28 20:36 Muscat (UTC+4). Status: IN PROGRESS.
+
 ## Last run
 Started 2026-11-28 14:36 Muscat (UTC+4), finished 2026-11-28 14:48 Muscat. Status: FINISHED.
 First recorded run (no earlier status file existed).
