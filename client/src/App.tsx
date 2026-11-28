@@ -1,23 +1,34 @@
+import { lazy, Suspense, type ComponentType } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { I18nProvider } from "./contexts/I18nContext";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
-import Inbox from "./pages/app/Inbox";
-import SignIn from "./pages/app/SignIn";
-import ResetPassword from "./pages/app/ResetPassword";
-import Connections from "./pages/app/Connections";
-import BrandVoice from "./pages/app/BrandVoice";
-import Billing, { BillingReturn } from "./pages/app/Billing";
-import AdminContent from "./pages/app/AdminContent";
-import AdminDashboard from "./pages/app/AdminDashboard";
-import AdminUsers from "./pages/app/AdminUsers";
-import { AdminAudit, AdminSecurity, AdminSystem } from "./pages/app/AdminOps";
-import Account from "./pages/app/Account";
-import Sequences from "./pages/app/Sequences";
-import Comments from "./pages/app/Comments";
-import Leads from "./pages/app/Leads";
-import Customers from "./pages/app/Customers";
-import AdminBlog, { AdminBlogEdit } from "./pages/app/AdminBlog";
+// The signed-in app and the admin pages load on demand, so visitors to the public
+// site do not download them.
+const page = <T extends Record<string, ComponentType<any>>>(load: () => Promise<T>, name: keyof T) =>
+  lazy(() => load().then((m) => ({ default: m[name] })));
+const appPages = () => import("./pages/app/pages");
+const Inbox = page(appPages, "Inbox");
+const SignIn = page(appPages, "SignIn");
+const ResetPassword = page(appPages, "ResetPassword");
+const Connections = page(appPages, "Connections");
+const BrandVoice = page(appPages, "BrandVoice");
+const Billing = page(appPages, "Billing");
+const BillingReturn = page(appPages, "BillingReturn");
+const Account = page(appPages, "Account");
+const Sequences = page(appPages, "Sequences");
+const Comments = page(appPages, "Comments");
+const Leads = page(appPages, "Leads");
+const Customers = page(appPages, "Customers");
+const adminPages = () => import("./pages/app/adminPages");
+const AdminContent = page(adminPages, "AdminContent");
+const AdminDashboard = page(adminPages, "AdminDashboard");
+const AdminUsers = page(adminPages, "AdminUsers");
+const AdminAudit = page(adminPages, "AdminAudit");
+const AdminSecurity = page(adminPages, "AdminSecurity");
+const AdminSystem = page(adminPages, "AdminSystem");
+const AdminBlog = page(adminPages, "AdminBlog");
+const AdminBlogEdit = page(adminPages, "AdminBlogEdit");
 import Blog, { BlogPost } from "./pages/Blog";
 import Legal from "./pages/Legal";
 import { About, Contact, Demo, Faq } from "./pages/InfoPages";
@@ -36,6 +47,7 @@ const retiredPaths: Record<string, string> = {
 function Router() {
   usePageMeta();
   return (
+    <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/app" component={Inbox} />
@@ -77,6 +89,7 @@ function Router() {
       ))}
       <Route component={NotFound} />
     </Switch>
+    </Suspense>
   );
 }
 
